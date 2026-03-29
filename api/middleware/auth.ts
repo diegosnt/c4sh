@@ -11,14 +11,15 @@ export async function authMiddleware(c: Context, next: Next) {
   const token = authHeader.split(' ')[1];
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Usamos el cliente de Supabase para obtener el usuario
+    const { data, error } = await supabase.auth.getUser(token);
 
-    if (error || !user) {
+    if (error || !data.user) {
       return c.json({ error: 'No autorizado - Token inválido' }, 401);
     }
 
     // Inyectar el usuario y el token en el contexto de Hono
-    c.set('user', user);
+    c.set('user', data.user);
     c.set('accessToken', token);
     await next();
   } catch (err) {
