@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { logger as honoLogger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import { zValidator } from '@hono/zod-validator';
@@ -20,7 +21,8 @@ type Variables = {
   accessToken: string;
 };
 
-const app = new Hono<{ Variables: Variables }>().basePath('/api');
+const app = new Hono<{ Variables: Variables }>();
+const api = new Hono<{ Variables: Variables }>();
 
 // --- UTILIDADES DE SANITIZACIÓN ---
 const sqlSanitize = (val: string) => {
@@ -51,7 +53,7 @@ const limiter = rateLimiter({
   standardHeaders: "draft-6",
   keyGenerator: (c) => c.req.header("x-forwarded-for") || c.req.header("remote-addr") || "anonymous",
 });
-app.use('*', limiter);
+api.use('*', limiter);
 
 const transactionSchema = z.object({
   amount: z.union([z.string(), z.number()])
@@ -62,20 +64,23 @@ const transactionSchema = z.object({
   date: z.string().optional().nullable(),
 });
 
-app.use('*', honoLogger());
+api.use('*', (c, next) => {
+  const loggerFn = honoLogger();
+  return loggerFn(c, next);
+});
 
-// --- ROUTES ---
+// --- API ROUTES ---
 
-app.get('/config', (c) => {
+api.get('/config', (c) => {
   return c.json({
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY
   });
 });
 
-app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date() }));
+api.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date() }));
 
-app.get('/transactions', authMiddleware, async (c) => {
+api.get('/transactions', authMiddleware, async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
@@ -88,7 +93,7 @@ app.get('/transactions', authMiddleware, async (c) => {
   return c.json(data);
 });
 
-app.post('/transactions', authMiddleware, zValidator('json', transactionSchema, (result, c) => {
+api.post('/transactions', authMiddleware, zValidator('json', transactionSchema, (result, c) => {
   if (!result.success) return c.json({ error: 'Datos inválidos', details: result.error }, 400);
 }), async (c) => {
   const user = c.get('user');
@@ -103,7 +108,7 @@ app.post('/transactions', authMiddleware, zValidator('json', transactionSchema, 
   return c.json(data);
 });
 
-app.delete('/transactions/:id', authMiddleware, async (c) => {
+api.delete('/transactions/:id', authMiddleware, async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
@@ -112,6 +117,20 @@ app.delete('/transactions/:id', authMiddleware, async (c) => {
   if (error) return c.json({ error: error.message }, 500);
   return c.body(null, 204);
 });
+
+// --- MAIN APP ---
+
+// Montar la API
+app.route('/api', api);
+
+// Servir archivos estáticos
+app.use('/*', serveStatic({ root: './public' }));
+
+// Manejar favicon.ico para evitar 404 en la consola
+app.get('/favicon.ico', (c) => c.body(null, 204));
+
+// Redireccionar raíz a index.html
+app.get('/', serveStatic({ path: './public/index.html' }));
 
 // --- EXPORT PARA VERCEL ---
 export const GET = handle(app);

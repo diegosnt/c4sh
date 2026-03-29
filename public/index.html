@@ -1,107 +1,58 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>c4sh - Login</title>
   
-  <!-- Simple.css: Minimalismo puro -->
-  <link rel="stylesheet" href="css/simple.min.css">
+  <!-- Tailwind CSS Output -->
+  <link rel="stylesheet" href="css/style.css">
   
-  <style>
-    /* Estilos para el Modo Manual de Simple.css */
-    :root[data-theme="light"] {
-      --bg: #ffffff;
-      --accent-bg: #f5f7f9;
-      --text: #212121;
-      --text-light: #585858;
-      --border: #d8dee9;
-      --accent: #0d47a1;
-    }
-    :root[data-theme="dark"] {
-      --bg: #212121;
-      --accent-bg: #2b2b2b;
-      --text: #dcdcdc;
-      --text-light: #ababab;
-      --border: #444;
-      --accent: #ffb300;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-    main {
-      width: 100%;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    .error {
-      color: #e74c3c;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    h1 {
-      text-align: center;
-    }
-    .theme-toggle-container {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-    }
-    .btn-small {
-      padding: 0.2rem 0.5rem;
-      background-color: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-light);
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-  </style>
-
   <script>
     (function() {
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-bs-theme', theme);
     })();
   </script>
 </head>
-<body>
-  <div class="theme-toggle-container">
-    <button id="theme-toggle" class="btn-small">🌓</button>
+<body class="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <div class="absolute top-4 right-4 z-10">
+    <button id="theme-toggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 h-9 px-3">🌓</button>
   </div>
 
-  <main>
-    <article>
-      <h1>c4sh</h1>
-      <p style="text-align: center; color: var(--text-light);">Registro de finanzas</p>
-      
-      <div id="error" class="error"></div>
-      
-      <form id="login-form">
-        <p>
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="tu@email.com" required>
-        </p>
-        <p>
-          <label for="password">Contraseña</label>
-          <input type="password" id="password" name="password" required>
-        </p>
-        <button type="submit" id="submit-btn">Iniciar sesión</button>
-      </form>
-    </article>
-  </main>
+  <div class="container mx-auto px-4 w-full max-w-[400px]">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div class="p-10">
+        <h1 class="text-center text-3xl font-bold mb-1 dark:text-white">c4sh</h1>
+        <p class="text-center text-gray-500 dark:text-gray-400 mb-4">Registro de finanzas</p>
+        
+        <div id="error"></div>
+        
+        <form id="login-form">
+          <div class="mb-3">
+            <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="email">Email</label>
+            <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="email" id="email" name="email" placeholder="tu@email.com" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="password">Contraseña</label>
+            <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="password" id="password" name="password" required>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">Iniciar sesión</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <script>
     const themeToggle = document.getElementById('theme-toggle');
     themeToggle.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
       localStorage.setItem('theme', newTheme);
     });
   </script>

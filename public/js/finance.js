@@ -65,6 +65,8 @@ async function loadCategories() {
 }
 
 function renderCategories(categories) {
+  // We don't need the select wrapper here as it's in the HTML, 
+  // but we ensure the select itself has the proper options.
   categorySelect.innerHTML = '<option value="">Seleccionar...</option>' +
     categories.map(cat => `
       <option value="${cat.id}">${cat.icon} ${cat.name}</option>
@@ -92,21 +94,29 @@ async function loadTransactions() {
 
 function renderTransactions(transactions) {
   if (!Array.isArray(transactions) || transactions.length === 0) {
-    transactionList.innerHTML = '<p style="text-align: center; color: var(--text-light);">No hay transacciones todavía.</p>';
+    transactionList.innerHTML = `
+      <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-center shadow-sm">
+        No hay transacciones todavía.
+      </div>
+    `;
     return;
   }
 
   transactionList.innerHTML = transactions.map(t => `
-    <div class="transaction-item">
-      <div class="transaction-info">
-        <h4>${t.categories?.icon || '📦'} ${t.description || 'Sin descripción'}</h4>
-        <span>${new Date(t.date).toLocaleDateString()} • ${t.categories?.name || 'S/C'}</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <span class="amount-val" style="color: ${t.categories?.type === 'income' ? '#2ecc71' : '#e74c3c'}">
-          ${t.categories?.type === 'income' ? '+' : '-'}$${Math.abs(t.amount).toFixed(2)}
-        </span>
-        <button class="delete-btn" onclick="deleteTransaction('${t.id}')">✕</button>
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-3 transaction-item transition-colors hover:bg-gray-50 dark:hover:bg-gray-750">
+      <div class="flex justify-between items-center">
+        <div>
+          <h5 class="text-lg font-semibold mb-1 dark:text-white">${t.categories?.icon || '📦'} ${t.description || 'Sin descripción'}</h5>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">
+            ${new Date(t.date).toLocaleDateString()} • ${t.categories?.name || 'S/C'}
+          </p>
+        </div>
+        <div class="flex items-center">
+          <span class="text-lg font-bold mr-4 ${t.categories?.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+            ${t.categories?.type === 'income' ? '+' : '-'}$${Math.abs(t.amount).toFixed(2)}
+          </span>
+          <button class="px-2 py-1 text-xs border border-red-600 text-red-600 hover:bg-red-600 hover:text-white rounded transition-colors" onclick="deleteTransaction('${t.id}')">✕</button>
+        </div>
       </div>
     </div>
   `).join('');
