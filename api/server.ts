@@ -13,7 +13,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 const logger = pino();
-const app = new Hono().basePath('/api');
+
+// --- TIPOS DE HONO ---
+type Variables = {
+  user: any;
+  accessToken: string;
+};
+
+const app = new Hono<{ Variables: Variables }>().basePath('/api');
 
 // --- UTILIDADES DE SANITIZACIÓN ---
 const sqlSanitize = (val: string) => {
@@ -59,7 +66,6 @@ app.use('*', honoLogger());
 
 // --- ROUTES ---
 
-// Endpoint para que el front obtenga la config
 app.get('/config', (c) => {
   return c.json({
     supabaseUrl: process.env.SUPABASE_URL,
@@ -83,7 +89,7 @@ app.get('/transactions', authMiddleware, async (c) => {
 });
 
 app.post('/transactions', authMiddleware, zValidator('json', transactionSchema, (result, c) => {
-  if (!result.success) return c.json({ error: 'Datos inválidos', details: result.error.format() }, 400);
+  if (!result.success) return c.json({ error: 'Datos inválidos', details: result.error }, 400);
 }), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
