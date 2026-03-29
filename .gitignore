@@ -1,0 +1,44 @@
+# Secretos y Entorno
+.env
+.env.local
+.env.*.local
+
+# Dependencias
+node_modules/
+jspm_packages/
+typings/
+
+# Compilación y Build
+dist/
+build/
+out/
+.next/
+.serverless/
+bin/
+obj/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Editor y OS
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Temporales y Caché
+.npm
+.eslintcache
+.pnpm-debug.log*
+.tsx
+.turbo

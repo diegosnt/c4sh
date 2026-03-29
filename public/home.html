@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>c4sh - Mis Finanzas</title>
+  
+  <!-- Simple.css: Minimalismo puro -->
+  <link rel="stylesheet" href="css/simple.min.css">
+  
+  <style>
+    /* Estilos para el Modo Manual de Simple.css */
+    :root[data-theme="light"] {
+      --bg: #ffffff;
+      --accent-bg: #f5f7f9;
+      --text: #212121;
+      --text-light: #585858;
+      --border: #d8dee9;
+      --accent: #0d47a1;
+      --code: #d44950;
+      --preformatted: #444;
+      --marked: #ffdd33;
+    }
+    :root[data-theme="dark"] {
+      --bg: #212121;
+      --accent-bg: #2b2b2b;
+      --text: #dcdcdc;
+      --text-light: #ababab;
+      --border: #444;
+      --accent: #ffb300;
+      --code: #f06292;
+      --preformatted: #ccc;
+      --marked: #997b00;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .summary-grid article {
+      margin: 0;
+      text-align: center;
+    }
+    .summary-grid p {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0.5rem 0 0 0;
+    }
+    .income { color: #2ecc71; }
+    .expense { color: #e74c3c; }
+    
+    .transaction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .transaction-item:last-child { border-bottom: none; }
+    .transaction-info h4 { margin: 0; font-size: 1.1rem; }
+    .transaction-info span { font-size: 0.85rem; color: var(--text-light); }
+    
+    .amount-val { font-weight: bold; }
+    .btn-small {
+      padding: 0.2rem 0.5rem;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-light);
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .btn-small:hover { border-color: var(--accent); color: var(--accent); }
+    .delete-btn:hover { background-color: #e74c3c; color: white; border-color: #e74c3c; }
+    
+    form {
+      background-color: var(--accent-bg);
+      padding: 1.5rem;
+      border-radius: 5px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  </style>
+
+  <script>
+    // Script de Tema (Inyectado al principio para evitar parpadeos)
+    (function() {
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <nav>
+      <strong>c4sh</strong>
+    </nav>
+    <div class="header-actions">
+      <button id="theme-toggle" class="btn-small">🌓</button>
+      <button id="logout-btn" class="btn-small delete-btn">Salir</button>
+    </div>
+  </header>
+
+  <main>
+    <h1>Mis Finanzas</h1>
+    
+    <div class="summary-grid">
+      <article>
+        <small>Saldo Total</small>
+        <p id="total-balance">$0.00</p>
+      </article>
+      <article>
+        <small>Ingresos</small>
+        <p id="total-income" class="income">$0.00</p>
+      </article>
+      <article>
+        <small>Gastos</small>
+        <p id="total-expense" class="expense">$0.00</p>
+      </article>
+    </div>
+
+    <section>
+      <h2>Nueva Transacción</h2>
+      <form id="transaction-form">
+        <div class="form-row">
+          <p>
+            <label for="amount">Monto</label>
+            <input type="number" id="amount" step="0.01" placeholder="0.00" required>
+          </p>
+          <p>
+            <label for="category">Categoría</label>
+            <select id="category" required>
+              <option value="">Seleccionar...</option>
+            </select>
+          </p>
+        </div>
+        <p>
+          <label for="description">Descripción</label>
+          <input type="text" id="description" placeholder="Ej: Supermercado, Sueldo...">
+        </p>
+        <button type="submit">Guardar Transacción</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Actividad Reciente</h2>
+      <article id="transaction-list">
+        <p style="text-align: center; color: var(--text-light);">No hay transacciones todavía.</p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    // Lógica del botón de Tema
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  </script>
+  <script type="module" src="js/finance.js"></script>
+</body>
+</html>
