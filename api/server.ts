@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
-import { serveStatic } from 'hono/serve-static';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { logger } from 'hono/logger';
 import { rateLimiter } from 'hono-rate-limiter';
 import { secureHeaders } from 'hono/secure-headers';
@@ -9,11 +9,21 @@ import { zValidator } from '@hono/zod-validator';
 import { serve } from '@hono/node-server';
 import { getSupabase } from './lib/supabase.js';
 import { authMiddleware } from './middleware/auth.js';
+import { User } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const app = new Hono();
+// Definición de tipos para el contexto de Hono
+type Env = {
+  Variables: {
+    user: User;
+    accessToken: string;
+  };
+};
+
+const app = new Hono<Env>();
+const api = new Hono<Env>();
 
 // --- SEGURIDAD INDUSTRIAL ---
 // 1. Headers de seguridad (CSP, HSTS, XSS, Frame Options, etc.)
@@ -73,8 +83,6 @@ const transactionSchema = z.object({
   description: z.string().trim().max(250, "Máximo 250 caracteres").transform(sqlSanitize).optional().nullable(),
   date: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional().nullable(),
 });
-
-const api = new Hono();
 
 // --- API ROUTES ---
 

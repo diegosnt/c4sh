@@ -1,7 +1,15 @@
 import { Context, Next } from 'hono';
 import { supabase } from '../lib/supabase.js';
+import { User } from '@supabase/supabase-js';
 
-export async function authMiddleware(c: Context, next: Next) {
+type Env = {
+  Variables: {
+    user: User;
+    accessToken: string;
+  };
+};
+
+export async function authMiddleware(c: Context<Env>, next: Next) {
   const authHeader = c.req.header('Authorization');
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
