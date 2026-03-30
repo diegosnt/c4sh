@@ -1,33 +1,35 @@
-# 💰 c4sh - Finanzas
+# 💰 c4sh - Finanzas Personales (Security-First)
 
-**c4sh** es una aplicación ultra-minimalista, moderna y segura para el seguimiento de finanzas personales. Diseñada bajo la filosofía de "menos es más", se enfoca en la velocidad de uso, la legibilidad y la integridad de los datos.
+**c4sh** es una aplicación ultra-minimalista, moderna y blindada para el seguimiento de finanzas personales. Diseñada bajo la filosofía de "menos es más", se enfoca en la velocidad de uso, la legibilidad extrema y la protección total de datos sensibles.
 
 ## 🚀 Tech Stack
 
-- **Backend**: [Hono](https://hono.dev/) + [Node.js](https://nodejs.org/) (ESM). Elegido por su performance extrema y zero dependencias legadas.
-- **Lenguaje**: [TypeScript](https://www.typescript.org/) para un desarrollo robusto y tipado estricto.
-- **Base de Datos & Auth**: [Supabase](https://supabase.com/) (PostgreSQL).
-- **Frontend**: HTML5 + Vanilla JS + [Tailwind CSS](https://tailwindcss.com/). Diseño basado en utilidades para un control total y performance máxima.
-- **Validación**: [Zod](https://zod.dev/) para asegurar la integridad de los datos en runtime.
+- **Backend**: [Hono](https://hono.dev/) + [Node.js](https://nodejs.org/). Performance extrema con arquitectura de middleware moderna.
+- **Frontend**: [Tailwind CSS](https://tailwindcss.com/) + Vanilla JS. UI basada en utilidades con un peso final de CSS < 15KB.
+- **Base de Datos & Auth**: [Supabase](https://supabase.com/) (PostgreSQL) con **Row Level Security (RLS)** estricto.
+- **Validación**: [Zod](https://zod.dev/) con esquemas de blindaje contra inyección y denegación de servicio.
 
-## 🛡️ Seguridad (Blindaje MVP)
+## 🛡️ Blindaje de Seguridad Industrial (Búnker MVP)
 
-La aplicación no es solo un prototipo, cuenta con capas de seguridad industrial:
+La aplicación implementa múltiples capas de protección activa:
 
-1.  **Row Level Security (RLS)**: Cada usuario solo puede ver y modificar sus propios datos directamente en PostgreSQL.
-2.  **Validación con Zod**: Los datos de entrada son validados y transformados antes de tocar la lógica de negocio.
-3.  **Sanitización SQL**: Capa manual de limpieza de strings (remoción de bytes nulos y escape de comillas) integrada en los esquemas de validación.
-4.  **Rate Limiting**: Protección contra ataques de fuerza bruta y abuso de API (100 req/min por IP).
-5.  **Security Headers**: Implementación de CSP, Anti-Clickjacking y protección contra Sniffing mediante headers de seguridad modernos.
-6.  **JWT Auth**: Autenticación persistente y segura delegada a Supabase Auth.
+1.  **Row Level Security (RLS) Avanzado**: Aislamiento total a nivel de base de datos. Ningún usuario puede acceder, editar o borrar datos de otro, validado directamente en PostgreSQL.
+2.  **Hono Secure Headers**: Implementación de CSP (Content Security Policy), HSTS (Strict-Transport-Security), X-Frame-Options (Anti-Clickjacking) y X-Content-Type-Options (Anti-Sniffing).
+3.  **Validación & Sanitización Estricta**:
+    - Esquemas de Zod con límites de longitud (`.max()`) y validación de tipos.
+    - Sanitización manual de SQL para prevenir ataques de inyección en campos de texto.
+    - Control de caracteres nulos y escape de secuencias peligrosas.
+4.  **Rate Limiting Dinámico**: Protección contra ataques de fuerza bruta (100 req/min por IP).
+5.  **Aislamiento de Auth**: Separación de datos sensibles (`auth.users`) de datos de perfil (`profiles`).
 
-## 🌓 Características
+## 🌓 Características Pro
 
-- **Dashboard Dinámico**: Saldo total, ingresos y gastos calculados en tiempo real.
-- **Categorías Inteligentes**: Auto-generación de categorías básicas (Sueldo, Comida, Alquiler, etc.) en la primera sesión.
-- **Tailwind UI**: Interfaz moderna, limpia y ultra-ligera (CSS final < 15KB).
-- **Modo Dual Nativo**: Soporte para Modo Claro y Oscuro sincronizado con el sistema operativo y persistente en `localStorage`.
-- **Responsive Design**: Adaptabilidad total a cualquier dispositivo sin sobrecarga de código.
+- **Gestión Total de Entidades**: Modales interactivos de Tailwind CSS para crear y editar Categorías y Medios de Pago sin salir del dashboard.
+- **Dashboard en Tiempo Real**: Resumen de Saldo, Ingresos y Gastos con cálculo instantáneo.
+- **Personalización Visual**: Soporte completo para Emojis en Categorías (🏠, 🍔, 💰) y Medios de Pago (💳, 🏦, 💵).
+- **Control de Fechas**: Registro de transacciones con fechas pasadas o futuras mediante un Date Picker nativo.
+- **Modo Dual Automático**: Detección de preferencia del sistema (Dark/Light) con persistencia en `localStorage`.
+- **Zero Latency UI**: Interfaz optimizada para carga instantánea y feedback visual inmediato en la edición de gastos.
 
 ## 🛠️ Instalación y Setup
 
@@ -36,47 +38,44 @@ La aplicación no es solo un prototipo, cuenta con capas de seguridad industrial
 pnpm install
 ```
 
-### 2. Configuración de Entorno
-Crea un archivo `.env` basado en el ejemplo:
+### 2. Configuración de Entorno (`.env`)
 ```env
-SUPABASE_URL=tu_url
-SUPABASE_ANON_KEY=tu_clave_anonima
-PORT=3000
+SUPABASE_URL=tu_url_de_supabase
+SUPABASE_ANON_KEY=tu_anon_key_de_supabase
+PORT=3001
 ```
 
-### 3. Base de Datos
-Ejecuta los scripts en la carpeta `/sql` en el Editor SQL de tu proyecto Supabase (en orden: `00_init.sql` y luego `01_rls.sql`).
+### 3. Base de Datos (SQL Editor)
+Ejecutar los scripts de la carpeta `/sql` en este orden:
+1.  `00_init.sql` (Tablas base)
+2.  `01_rls.sql` (Políticas iniciales)
+3.  `02_payment_methods.sql` (Soporte para medios de pago)
+4.  `03_pm_icon.sql` (Iconos para medios de pago)
+5.  `04_security_audit.sql` (Sello de seguridad y blindaje final)
 
 ### 4. Desarrollo
-Para correr el servidor y el compilador de CSS en paralelo (recomendado):
-
 ```bash
-# Terminal 1: Servidor Hono
+# Terminal 1: Servidor Backend
 pnpm dev
 
-# Terminal 2: Watcher de Tailwind CSS
+# Terminal 2: Compilador de Tailwind (Watcher)
 pnpm dev:css
 ```
-La app levantará en `http://localhost:3000`.
 
 ## 📂 Estructura del Proyecto
 
 ```text
 ├── api/
-│   ├── lib/            # Utilidades y cliente Supabase
-│   ├── middleware/     # Auth y validaciones
-│   └── server.ts       # Servidor Hono y rutas
+│   ├── lib/            # Cliente Supabase y utilidades
+│   ├── middleware/     # Auth y lógica de blindaje
+│   └── server.ts       # Servidor Hono, Zod Schemas y Endpoints
 ├── public/
-│   ├── css/
-│   │   ├── input.css   # Fuente de Tailwind
-│   │   └── style.css   # CSS Compilado (No editar manualmente)
-│   ├── js/             # Lógica del frontend
-│   └── index.html      # Punto de entrada
-├── sql/                # Scripts de base de datos
-├── tailwind.config.js  # Configuración de Tailwind
-├── .env                # Variables de entorno (no commitear!)
-└── tsconfig.json       # Configuración de TypeScript
+│   ├── css/            # Tailwind Input & Compiled Style
+│   ├── js/             # Lógica de Dashboard, Auth y Supabase
+│   └── home.html       # UI Principal con Modales
+├── sql/                # Scripts de evolución de DB y Seguridad
+└── tailwind.config.js  # Configuración del motor de diseño
 ```
 
 ---
-Diseñado con ❤️ por un arquitecto apasionado por el código limpio. ¡Dale que vuela! 🚀✨
+Diseñado con ❤️ por un arquitecto apasionado por la seguridad y el código limpio. ¡A darle que vuela! 🚀💰🛡️

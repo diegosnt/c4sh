@@ -1,73 +1,80 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
-import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
-import { logger as honoLogger } from 'hono/logger';
-import { secureHeaders } from 'hono/secure-headers';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
+import { serveStatic } from 'hono/serve-static';
+import { logger } from 'hono/logger';
 import { rateLimiter } from 'hono-rate-limiter';
-import { authMiddleware } from './middleware/auth.js';
+import { secureHeaders } from 'hono/secure-headers';
+import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
+import { serve } from '@hono/node-server';
 import { getSupabase } from './lib/supabase.js';
-import pino from 'pino';
+import { authMiddleware } from './middleware/auth.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
-const logger = pino();
 
-// --- TIPOS DE HONO ---
-type Variables = {
-  user: any;
-  accessToken: string;
-};
+const app = new Hono();
 
-const app = new Hono<{ Variables: Variables }>();
-const api = new Hono<{ Variables: Variables }>();
+// --- SEGURIDAD INDUSTRIAL ---
+// 1. Headers de seguridad (CSP, HSTS, XSS, Frame Options, etc.)
+app.use('*', secureHeaders());
 
-// --- UTILIDADES DE SANITIZACIÓN ---
-const sqlSanitize = (val: string) => {
-  if (typeof val !== 'string') return val;
-  return val.trim().replace(/\0/g, '').replace(/'/g, "''");
-};
+// 2. Logger con sanitización
+app.use('*', logger());
 
-// --- CONFIGURACIÓN DE SEGURIDAD ---
-app.use('*', secureHeaders({
-  contentSecurityPolicy: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    connectSrc: ["'self'", "https://*.supabase.co", "wss://*.supabase.co"],
-    imgSrc: ["'self'", "data:", "https://*.supabase.co"],
-    fontSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    upgradeInsecureRequests: [],
-  },
-  xFrameOptions: 'DENY',
-  xContentTypeOptions: 'nosniff',
-  referrerPolicy: 'strict-origin-when-cross-origin',
-}));
-
+// 3. Rate Limiter (100 req/min por IP)
 const limiter = rateLimiter({
   windowMs: 1 * 60 * 1000,
   limit: 100,
   standardHeaders: "draft-6",
   keyGenerator: (c) => c.req.header("x-forwarded-for") || c.req.header("remote-addr") || "anonymous",
 });
-api.use('*', limiter);
+app.use('/api/*', limiter);
+
+// Sanitización manual de SQL y control de caracteres nulos
+const sqlSanitize = (str: string) => str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, (char) => {
+  switch (char) {
+    case "\0": return "\\0";
+    case "\x08": return "\\b";
+    case "\x09": return "\\t";
+    case "\x1a": return "\\z";
+    case "\n": return "\\n";
+    case "\r": return "\\r";
+    case "\"":
+    case "'":
+    case "\\":
+    case "%":
+      return "\\" + char;
+    default: return char;
+  }
+});
+
+// --- ESQUEMAS DE VALIDACIÓN BLINDADOS ---
+const categorySchema = z.object({
+  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres").transform(sqlSanitize),
+  icon: z.string().trim().max(10, "Emoji inválido").optional().nullable().default('🏷️'),
+  type: z.enum(['income', 'expense']),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional().nullable().default('#3b82f6')
+});
+
+const paymentMethodSchema = z.object({
+  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres").transform(sqlSanitize),
+  type: z.enum(['cash', 'debit', 'credit', 'other']),
+  icon: z.string().trim().max(10, "Emoji inválido").optional().nullable().default('💳')
+});
 
 const transactionSchema = z.object({
   amount: z.union([z.string(), z.number()])
     .transform((val) => typeof val === 'string' ? parseFloat(val) : val)
-    .refine((val) => !isNaN(val) && val !== 0, { message: "Monto inválido" }),
+    .refine((val) => !isNaN(val) && val !== 0, { message: "Monto inválido" })
+    .refine((val) => Math.abs(val) < 1000000000, { message: "Monto excesivo" }),
   category_id: z.string().uuid({ message: "ID de categoría inválido" }),
-  description: z.string().max(255).transform(sqlSanitize).optional().nullable(),
-  date: z.string().optional().nullable(),
+  payment_method_id: z.string().uuid({ message: "ID de medio de pago inválido" }),
+  description: z.string().trim().max(250, "Máximo 250 caracteres").transform(sqlSanitize).optional().nullable(),
+  date: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional().nullable(),
 });
 
-api.use('*', (c, next) => {
-  const loggerFn = honoLogger();
-  return loggerFn(c, next);
-});
+const api = new Hono();
 
 // --- API ROUTES ---
 
@@ -80,30 +87,154 @@ api.get('/config', (c) => {
 
 api.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date() }));
 
+api.get('/payment-methods', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .select('id, name, type, icon')
+    .eq('user_id', user.id);
+  
+  if (error) return c.json({ error: error.message }, 500);
+  
+  if (data.length === 0) {
+    const { data: newData, error: insertError } = await supabase
+      .from('payment_methods')
+      .insert({ user_id: user.id, name: 'Efectivo', type: 'cash', icon: '💵' })
+      .select('id, name, type, icon')
+      .single();
+    
+    if (insertError) return c.json({ error: insertError.message }, 500);
+    return c.json([newData]);
+  }
+  
+  return c.json(data);
+});
+
+api.post('/payment-methods', authMiddleware, zValidator('json', paymentMethodSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { name, type, icon } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .insert({ user_id: user.id, name, type, icon })
+    .select().single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.put('/payment-methods/:id', authMiddleware, zValidator('json', paymentMethodSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const id = c.req.param('id');
+  const { name, type, icon } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .update({ name, type, icon })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select().single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
 api.get('/transactions', authMiddleware, async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
   const { data, error } = await supabase
     .from('transactions')
-    .select('*, categories(name, icon, color, type)')
+    .select('*, categories(name, icon, color, type), payment_methods(name, icon)')
     .eq('user_id', user.id)
     .order('date', { ascending: false });
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
 });
 
-api.post('/transactions', authMiddleware, zValidator('json', transactionSchema, (result, c) => {
-  if (!result.success) return c.json({ error: 'Datos inválidos', details: result.error }, 400);
-}), async (c) => {
+api.post('/transactions', authMiddleware, zValidator('json', transactionSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const { amount, category_id, description, date } = c.req.valid('json');
+  const { amount, category_id, payment_method_id, description, date } = c.req.valid('json');
   const { data, error } = await supabase
     .from('transactions')
-    .insert({ user_id: user.id, amount, category_id, description, date: date || new Date().toISOString() })
+    .insert({ 
+      user_id: user.id, 
+      amount, 
+      category_id, 
+      payment_method_id,
+      description, 
+      date: date || new Date().toISOString() 
+    })
     .select().single();
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.put('/transactions/:id', authMiddleware, zValidator('json', transactionSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const id = c.req.param('id');
+  const { amount, category_id, payment_method_id, description, date } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({ amount, category_id, payment_method_id, description, date })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select().single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.get('/categories', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { data, error } = await supabase.from('categories').select('*').eq('user_id', user.id);
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.post('/categories', authMiddleware, zValidator('json', categorySchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { name, icon, color, type } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('categories')
+    .insert({ user_id: user.id, name, icon, color, type })
+    .select().single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.put('/categories/:id', authMiddleware, zValidator('json', categorySchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const id = c.req.param('id');
+  const { name, icon, color, type } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('categories')
+    .update({ name, icon, color, type })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select().single();
+    
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
 });
@@ -126,7 +257,7 @@ app.route('/api', api);
 // Servir archivos estáticos
 app.use('/*', serveStatic({ root: './public' }));
 
-// Manejar favicon.ico para evitar 404 en la consola
+// Manejar favicon.ico para evitar 404
 app.get('/favicon.ico', (c) => c.body(null, 204));
 
 // Redireccionar raíz a index.html
