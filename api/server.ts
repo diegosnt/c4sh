@@ -9,7 +9,7 @@ import { zValidator } from '@hono/zod-validator';
 import { serve } from '@hono/node-server';
 import { getSupabase } from './lib/supabase.js';
 import { authMiddleware } from './middleware/auth.js';
-import { User } from '@supabase/supabase-js';
+import { AuthUser } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,7 +17,7 @@ dotenv.config();
 // Definición de tipos para el contexto de Hono
 type Env = {
   Variables: {
-    user: User;
+    user: AuthUser;
     accessToken: string;
   };
 };

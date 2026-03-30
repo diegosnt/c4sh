@@ -1,10 +1,10 @@
 import { Context, Next } from 'hono';
 import { supabase } from '../lib/supabase.js';
-import { User } from '@supabase/supabase-js';
+import { AuthUser } from '@supabase/supabase-js';
 
 type Env = {
   Variables: {
-    user: User;
+    user: AuthUser;
     accessToken: string;
   };
 };
