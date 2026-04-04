@@ -108,6 +108,12 @@ const transactionSchema = z.object({
 
 // --- API ROUTES ---
 
+api.get('/config', (c) => {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+  return c.json({ supabaseUrl, supabaseAnonKey });
+});
+
 api.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date() }));
 
 api.get('/payment-methods', authMiddleware, async (c) => {
