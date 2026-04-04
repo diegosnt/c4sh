@@ -52,6 +52,7 @@ Ejecutar los scripts de la carpeta `/sql` en este orden:
 3.  `02_payment_methods.sql` (Soporte para medios de pago)
 4.  `03_pm_icon.sql` (Iconos para medios de pago)
 5.  `04_security_audit.sql` (Sello de seguridad y blindaje final)
+6.  `05_profiles_insert_rls.sql` (Policy INSERT faltante en profiles)
 
 ### 4. Desarrollo
 ```bash
@@ -76,6 +77,22 @@ pnpm dev:css
 ├── sql/                # Scripts de evolución de DB y Seguridad
 └── tailwind.config.js  # Configuración del motor de diseño
 ```
+
+---
+
+## ✅ Tareas Pendientes
+
+### Optimización
+
+- [ ] **[O1] Implementar paginación en `/api/transactions`** — Agregar soporte para `?limit=` y `?offset=` (o cursor-based) en el endpoint de transacciones.
+- [ ] **[O2] Crear índices en columnas `user_id`** — `CREATE INDEX` en `categories.user_id`, `transactions.user_id`, `payment_methods.user_id`.
+- [ ] **[O3] Cachear el cliente Supabase autenticado por token** — Evitar instanciar `createClient()` en cada request.
+- [ ] **[O4] Recargar solo los datos que cambian post-operación** — Después de guardar una transacción, solo recargar transacciones.
+- [ ] **[O5] Optimizar re-renders del listado** — Usar actualizaciones incrementales del DOM en lugar de reconstruir toda la lista.
+- [ ] **[O6] Separar el onboarding del flujo de carga de datos** — Crear un endpoint o función dedicada para inicializar datos del primer uso.
+- [ ] **[O7] Agregar estados de loading y error en la UI** — Mostrar feedback visual mientras se cargan datos y cuando una operación falla.
+- [ ] **[O8] Agregar endpoints `DELETE` para categorías y medios de pago** — Completar el CRUD de entidades.
+- [ ] **[O9] Reemplazar `supabase-minimal.js` por el SDK oficial** — Usar `@supabase/supabase-js` en el frontend para tener token refresh, manejo de errores robusto y menos mantenimiento.
 
 ---
 Diseñado con ❤️ por un arquitecto apasionado por la seguridad y el código limpio. ¡A darle que vuela! 🚀💰🛡️

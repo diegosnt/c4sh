@@ -3,11 +3,11 @@ let cachedSession = null
 const SUPABASE_TOKEN_KEY = 'sb-access-token'
 
 function getStoredToken() {
-  try { return localStorage.getItem(SUPABASE_TOKEN_KEY) } catch { return null }
+  try { return sessionStorage.getItem(SUPABASE_TOKEN_KEY) } catch { return null }
 }
 
 function setStoredToken(token) {
-  try { token ? localStorage.setItem(SUPABASE_TOKEN_KEY, token) : localStorage.removeItem(SUPABASE_TOKEN_KEY) } catch {}
+  try { token ? sessionStorage.setItem(SUPABASE_TOKEN_KEY, token) : sessionStorage.removeItem(SUPABASE_TOKEN_KEY) } catch {}
 }
 
 export function createClient(supabaseUrl, supabaseAnonKey) {

@@ -7,12 +7,29 @@ import { secureHeaders } from 'hono/secure-headers';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { serve } from '@hono/node-server';
+import { getConnInfo } from '@hono/node-server/conninfo';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { getSupabase } from './lib/supabase.js';
 import { authMiddleware } from './middleware/auth.js';
 import { AuthUser } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Inyecta las variables de Supabase directamente en el HTML servido,
+// eliminando la necesidad de un endpoint /api/config público.
+const serveHtmlWithConfig = async (c: any, filename: string) => {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+  const filePath = join(process.cwd(), 'public', filename);
+  const html = await readFile(filePath, 'utf-8');
+  const injected = html.replace(
+    '</head>',
+    `<script>window.__SUPABASE_URL__="${supabaseUrl}";window.__SUPABASE_ANON_KEY__="${supabaseAnonKey}";if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));}</script></head>`
+  );
+  return c.html(injected);
+};
 
 // Definición de tipos para el contexto de Hono
 type Env = {
@@ -33,42 +50,47 @@ app.use('*', secureHeaders());
 app.use('*', logger());
 
 // 3. Rate Limiter (100 req/min por IP)
+// En producción (Vercel), x-forwarded-for es seteado por la CDN y es confiable.
+// Solo tomamos la primera IP de la lista y validamos que sea una IP real.
+// En desarrollo local, usamos la IP de la conexión TCP real (no falsificable por el cliente).
+const keyGenerator = (c: any): string => {
+  if (process.env.NODE_ENV === 'production') {
+    const forwarded = c.req.header('x-forwarded-for');
+    if (forwarded) {
+      const ip = forwarded.split(',')[0].trim();
+      if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip) || /^[a-f0-9:]+$/i.test(ip)) return ip;
+    }
+    return c.req.header('x-real-ip') || 'anonymous';
+  }
+  try {
+    return getConnInfo(c).remote.address || 'anonymous';
+  } catch {
+    return 'anonymous';
+  }
+};
+
 const limiter = rateLimiter({
   windowMs: 1 * 60 * 1000,
   limit: 100,
   standardHeaders: "draft-6",
-  keyGenerator: (c) => c.req.header("x-forwarded-for") || c.req.header("remote-addr") || "anonymous",
+  keyGenerator,
 });
 app.use('/api/*', limiter);
 
-// Sanitización manual de SQL y control de caracteres nulos
-const sqlSanitize = (str: string) => str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, (char) => {
-  switch (char) {
-    case "\0": return "\\0";
-    case "\x08": return "\\b";
-    case "\x09": return "\\t";
-    case "\x1a": return "\\z";
-    case "\n": return "\\n";
-    case "\r": return "\\r";
-    case "\"":
-    case "'":
-    case "\\":
-    case "%":
-      return "\\" + char;
-    default: return char;
-  }
+// --- ESQUEMAS DE VALIDACIÓN ---
+const uuidParamSchema = z.object({
+  id: z.string().uuid({ message: 'ID inválido' })
 });
 
-// --- ESQUEMAS DE VALIDACIÓN BLINDADOS ---
 const categorySchema = z.object({
-  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres").transform(sqlSanitize),
+  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres"),
   icon: z.string().trim().max(10, "Emoji inválido").optional().nullable().default('🏷️'),
   type: z.enum(['income', 'expense']),
   color: z.string().regex(/^#[0-9A-F]{6}$/i).optional().nullable().default('#3b82f6')
 });
 
 const paymentMethodSchema = z.object({
-  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres").transform(sqlSanitize),
+  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres"),
   type: z.enum(['cash', 'debit', 'credit', 'other']),
   icon: z.string().trim().max(10, "Emoji inválido").optional().nullable().default('💳')
 });
@@ -80,18 +102,11 @@ const transactionSchema = z.object({
     .refine((val) => Math.abs(val) < 1000000000, { message: "Monto excesivo" }),
   category_id: z.string().uuid({ message: "ID de categoría inválido" }),
   payment_method_id: z.string().uuid({ message: "ID de medio de pago inválido" }),
-  description: z.string().trim().max(250, "Máximo 250 caracteres").transform(sqlSanitize).optional().nullable(),
+  description: z.string().trim().max(250, "Máximo 250 caracteres").optional().nullable(),
   date: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional().nullable(),
 });
 
 // --- API ROUTES ---
-
-api.get('/config', (c) => {
-  return c.json({
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY
-  });
-});
 
 api.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date() }));
 
@@ -136,11 +151,11 @@ api.post('/payment-methods', authMiddleware, zValidator('json', paymentMethodSch
   return c.json(data);
 });
 
-api.put('/payment-methods/:id', authMiddleware, zValidator('json', paymentMethodSchema), async (c) => {
+api.put('/payment-methods/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', paymentMethodSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const id = c.req.param('id');
+  const { id } = c.req.valid('param');
   const { name, type, icon } = c.req.valid('json');
   
   const { data, error } = await supabase
@@ -187,11 +202,11 @@ api.post('/transactions', authMiddleware, zValidator('json', transactionSchema),
   return c.json(data);
 });
 
-api.put('/transactions/:id', authMiddleware, zValidator('json', transactionSchema), async (c) => {
+api.put('/transactions/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', transactionSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const id = c.req.param('id');
+  const { id } = c.req.valid('param');
   const { amount, category_id, payment_method_id, description, date } = c.req.valid('json');
   
   const { data, error } = await supabase
@@ -229,11 +244,11 @@ api.post('/categories', authMiddleware, zValidator('json', categorySchema), asyn
   return c.json(data);
 });
 
-api.put('/categories/:id', authMiddleware, zValidator('json', categorySchema), async (c) => {
+api.put('/categories/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', categorySchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const id = c.req.param('id');
+  const { id } = c.req.valid('param');
   const { name, icon, color, type } = c.req.valid('json');
   
   const { data, error } = await supabase
@@ -247,11 +262,11 @@ api.put('/categories/:id', authMiddleware, zValidator('json', categorySchema), a
   return c.json(data);
 });
 
-api.delete('/transactions/:id', authMiddleware, async (c) => {
+api.delete('/transactions/:id', authMiddleware, zValidator('param', uuidParamSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const id = c.req.param('id');
+  const { id } = c.req.valid('param');
   const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', user.id);
   if (error) return c.json({ error: error.message }, 500);
   return c.body(null, 204);
@@ -262,14 +277,16 @@ api.delete('/transactions/:id', authMiddleware, async (c) => {
 // Montar la API
 app.route('/api', api);
 
-// Servir archivos estáticos
+// Servir HTMLs con config de Supabase inyectada (nunca via endpoint público)
+app.get('/', (c) => serveHtmlWithConfig(c, 'index.html'));
+app.get('/index.html', (c) => serveHtmlWithConfig(c, 'index.html'));
+app.get('/home.html', (c) => serveHtmlWithConfig(c, 'home.html'));
+
+// Servir el resto de archivos estáticos (css, js, etc.)
 app.use('/*', serveStatic({ root: './public' }));
 
 // Manejar favicon.ico para evitar 404
 app.get('/favicon.ico', (c) => c.body(null, 204));
-
-// Redireccionar raíz a index.html
-app.get('/', serveStatic({ path: './public/index.html' }));
 
 // --- EXPORT PARA VERCEL ---
 export const GET = handle(app);

@@ -1,5 +1,14 @@
-import { supabase } from './supabase-client.js';
 import { getSession, signOut } from './auth.js';
+
+const escapeHtml = (str) => {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
 
 const transactionList = document.getElementById('transaction-list');
 const transactionForm = document.getElementById('transaction-form');
@@ -63,25 +72,19 @@ if (addCatBtn) {
 
 const editCatBtn = document.getElementById('edit-cat-btn');
 if (editCatBtn) {
-  editCatBtn.addEventListener('click', async () => {
+  editCatBtn.addEventListener('click', () => {
     const id = categorySelect.value;
     if (!id) {
       alert('Por favor, selecciona una categoría para editar.');
       return;
     }
-    
-    // Buscar la categoría actual
-    const { data: category, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('id', id)
-      .single();
-      
-    if (error) {
-      alert('Error al cargar la categoría: ' + error.message);
+
+    const category = categoriesCache.find(c => c.id === id);
+    if (!category) {
+      alert('Categoría no encontrada.');
       return;
     }
-    
+
     openModal('category-modal', 'Editar Categoría', category);
   });
 }
@@ -191,6 +194,8 @@ const totalIncomeEl = document.getElementById('total-income');
 const totalExpenseEl = document.getElementById('total-expense');
 
 let session = null;
+let categoriesCache = [];
+let transactionsCache = [];
 
 // Inicialización
 async function init() {
@@ -219,40 +224,43 @@ async function refreshData() {
 
 // Cargar categorías
 async function loadCategories() {
-  const { data: categories, error } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('user_id', session.user.id);
+  try {
+    const res = await fetch('/api/categories', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+    if (!res.ok) throw new Error('Error al cargar categorías');
 
-  if (error) {
-    console.error('❌ Error cargando categorías:', error);
-    return;
-  }
+    const data = await res.json();
 
-  if (!categories || categories.length === 0) {
-    // Si no hay categorías, crear las básicas
-    const basicCategories = [
-      { user_id: session.user.id, name: 'Comida', icon: '🍔', type: 'expense' },
-      { user_id: session.user.id, name: 'Sueldo', icon: '💰', type: 'income' },
-      { user_id: session.user.id, name: 'Transporte', icon: '🚌', type: 'expense' },
-      { user_id: session.user.id, name: 'Ocio', icon: '🎬', type: 'expense' }
-    ];
-    const { error: createError } = await supabase
-      .from('categories')
-      .insert(basicCategories);
-
-    if (!createError) {
-      const { data: newCats } = await supabase.from('categories').select('*').eq('user_id', session.user.id);
-      renderCategories(newCats || []);
+    if (!data || data.length === 0) {
+      // Crear categorías por defecto via API
+      const basicCategories = [
+        { name: 'Comida', icon: '🍔', type: 'expense' },
+        { name: 'Sueldo', icon: '💰', type: 'income' },
+        { name: 'Transporte', icon: '🚌', type: 'expense' },
+        { name: 'Ocio', icon: '🎬', type: 'expense' }
+      ];
+      await Promise.all(basicCategories.map(cat => fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify(cat)
+      })));
+      const res2 = await fetch('/api/categories', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      renderCategories(await res2.json());
+    } else {
+      renderCategories(data);
     }
-  } else {
-    renderCategories(categories);
+  } catch (err) {
+    console.error('❌ Error cargando categorías:', err);
   }
 }
 
-function renderCategories(categories) {
-  categorySelect.innerHTML = '<option value="">Seleccionar...</option>' + 
-    categories.map(c => `<option value="${c.id}">${c.icon || '🏷️'} ${c.name}</option>`).join('');
+function renderCategories(cats) {
+  categoriesCache = cats;
+  categorySelect.innerHTML = '<option value="">Seleccionar...</option>' +
+    cats.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.icon) || '🏷️'} ${escapeHtml(c.name)}</option>`).join('');
 }
 
 // Cargar medios de pago
@@ -267,8 +275,8 @@ async function loadPaymentMethods() {
     if (!res.ok) throw new Error('Error al cargar medios de pago');
 
     const data = await res.json();
-    paymentMethodSelect.innerHTML = '<option value="">Seleccionar...</option>' + 
-      data.map(pm => `<option value="${pm.id}">${pm.icon || '💳'} ${pm.name}</option>`).join('');
+    paymentMethodSelect.innerHTML = '<option value="">Seleccionar...</option>' +
+      data.map(pm => `<option value="${escapeHtml(pm.id)}">${escapeHtml(pm.icon) || '💳'} ${escapeHtml(pm.name)}</option>`).join('');
   } catch (err) {
     console.error('❌ Error en loadPaymentMethods:', err);
   }
@@ -286,6 +294,7 @@ async function loadTransactions() {
     if (!res.ok) throw new Error('Error al cargar transacciones');
 
     const transactions = await res.json();
+    transactionsCache = transactions;
     renderTransactions(transactions);
     updateSummary(transactions);
   } catch (err) {
@@ -307,21 +316,21 @@ function renderTransactions(transactions) {
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-3 transaction-item transition-colors hover:bg-gray-50 dark:hover:bg-gray-750">
       <div class="flex justify-between items-center">
         <div>
-          <h5 class="text-lg font-semibold mb-1 dark:text-white">${t.categories?.icon || '📦'} ${t.description || 'Sin descripción'}</h5>
+          <h5 class="text-lg font-semibold mb-1 dark:text-white">${escapeHtml(t.categories?.icon) || '📦'} ${escapeHtml(t.description) || 'Sin descripción'}</h5>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">
-            ${new Date(t.date).toLocaleDateString()} • ${t.categories?.name || 'S/C'} • <span class="font-medium">${t.payment_methods?.icon || '💳'} ${t.payment_methods?.name || 'S/M'}</span>
+            ${new Date(t.date).toLocaleDateString()} • ${escapeHtml(t.categories?.name) || 'S/C'} • <span class="font-medium">${escapeHtml(t.payment_methods?.icon) || '💳'} ${escapeHtml(t.payment_methods?.name) || 'S/M'}</span>
           </p>
         </div>
         <div class="flex items-center space-x-2">
           <span class="text-lg font-bold mr-2 ${t.categories?.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
             ${t.categories?.type === 'income' ? '+' : '-'}$${Math.abs(t.amount).toFixed(2)}
           </span>
-          <button class="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors" onclick="editTransaction('${t.id}')" title="Editar">
+          <button class="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors" onclick="editTransaction('${escapeHtml(t.id)}')" title="Editar">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
-          <button class="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors" onclick="deleteTransaction('${t.id}')" title="Eliminar">
+          <button class="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors" onclick="deleteTransaction('${escapeHtml(t.id)}')" title="Eliminar">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
@@ -332,32 +341,26 @@ function renderTransactions(transactions) {
   `).join('');
 }
 
-window.editTransaction = async (id) => {
-  try {
-    const { data: t, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-
-    document.getElementById('transaction-id').value = t.id;
-    document.getElementById('amount').value = t.amount;
-    document.getElementById('category').value = t.category_id;
-    document.getElementById('payment-method').value = t.payment_method_id;
-    document.getElementById('date').value = t.date.split('T')[0];
-    document.getElementById('description').value = t.description || '';
-
-    const submitBtn = transactionForm.querySelector('button[type="submit"]');
-    submitBtn.textContent = 'Actualizar Transacción';
-    submitBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
-    submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-
-    transactionForm.scrollIntoView({ behavior: 'smooth' });
-  } catch (err) {
-    console.error('❌ Error cargando transacción:', err);
+window.editTransaction = (id) => {
+  const t = transactionsCache.find(tx => tx.id === id);
+  if (!t) {
+    console.error('❌ Transacción no encontrada en cache:', id);
+    return;
   }
+
+  document.getElementById('transaction-id').value = t.id;
+  document.getElementById('amount').value = t.amount;
+  document.getElementById('category').value = t.category_id;
+  document.getElementById('payment-method').value = t.payment_method_id;
+  document.getElementById('date').value = t.date.split('T')[0];
+  document.getElementById('description').value = t.description || '';
+
+  const submitBtn = transactionForm.querySelector('button[type="submit"]');
+  submitBtn.textContent = 'Actualizar Transacción';
+  submitBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
+  submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+
+  transactionForm.scrollIntoView({ behavior: 'smooth' });
 };
 
 function updateSummary(transactions) {

@@ -36,6 +36,9 @@ logs/
 .DS_Store
 Thumbs.db
 
+# SQL migrations (contain DB structure info)
+sql/
+
 # Temporales y Caché
 .npm
 .eslintcache

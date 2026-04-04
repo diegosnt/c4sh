@@ -19,9 +19,7 @@ export async function authMiddleware(c: Context<Env>, next: Next) {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Forzamos el tipo a 'any' temporalmente para evitar el error de build de Vercel
-    // pero manteniendo la funcionalidad correcta.
-    const { data, error } = await (supabase.auth as any).getUser(token);
+    const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data?.user) {
       return c.json({ error: 'No autorizado - Token inválido' }, 401);
