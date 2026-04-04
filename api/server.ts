@@ -77,6 +77,13 @@ const limiter = rateLimiter({
 });
 app.use('/api/*', limiter);
 
+const strictLimiter = rateLimiter({
+  windowMs: 1 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-6",
+  keyGenerator,
+});
+
 // --- ESQUEMAS DE VALIDACIÓN ---
 const uuidParamSchema = z.object({
   id: z.string().uuid({ message: 'ID inválido' })
@@ -116,6 +123,19 @@ api.get('/config', (c) => {
 
 api.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date() }));
 
+// --- HELPER: Verificar ownership de recursos ---
+async function verifyResourceOwnership(supabase: any, userId: string, resourceType: 'category' | 'payment_method', resourceId: string): Promise<boolean> {
+  const table = resourceType === 'category' ? 'categories' : 'payment_methods';
+  const { data, error } = await supabase
+    .from(table)
+    .select('id')
+    .eq('id', resourceId)
+    .eq('user_id', userId)
+    .single();
+  
+  return !error && data !== null;
+}
+
 api.get('/payment-methods', authMiddleware, async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
@@ -142,7 +162,7 @@ api.get('/payment-methods', authMiddleware, async (c) => {
   return c.json(data);
 });
 
-api.post('/payment-methods', authMiddleware, zValidator('json', paymentMethodSchema), async (c) => {
+api.post('/payment-methods', strictLimiter, authMiddleware, zValidator('json', paymentMethodSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
@@ -188,11 +208,24 @@ api.get('/transactions', authMiddleware, async (c) => {
   return c.json(data);
 });
 
-api.post('/transactions', authMiddleware, zValidator('json', transactionSchema), async (c) => {
+api.post('/transactions', strictLimiter, authMiddleware, zValidator('json', transactionSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
   const { amount, category_id, payment_method_id, description, date } = c.req.valid('json');
+
+  const [categoryValid, paymentValid] = await Promise.all([
+    verifyResourceOwnership(supabase, user.id, 'category', category_id),
+    verifyResourceOwnership(supabase, user.id, 'payment_method', payment_method_id)
+  ]);
+
+  if (!categoryValid) {
+    return c.json({ error: 'Categoría inválida o no pertenece al usuario' }, 400);
+  }
+  if (!paymentValid) {
+    return c.json({ error: 'Medio de pago inválido o no pertenece al usuario' }, 400);
+  }
+
   const { data, error } = await supabase
     .from('transactions')
     .insert({ 
@@ -208,12 +241,24 @@ api.post('/transactions', authMiddleware, zValidator('json', transactionSchema),
   return c.json(data);
 });
 
-api.put('/transactions/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', transactionSchema), async (c) => {
+api.put('/transactions/:id', strictLimiter, authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', transactionSchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
   const { id } = c.req.valid('param');
   const { amount, category_id, payment_method_id, description, date } = c.req.valid('json');
+
+  const [categoryValid, paymentValid] = await Promise.all([
+    verifyResourceOwnership(supabase, user.id, 'category', category_id),
+    verifyResourceOwnership(supabase, user.id, 'payment_method', payment_method_id)
+  ]);
+
+  if (!categoryValid) {
+    return c.json({ error: 'Categoría inválida o no pertenece al usuario' }, 400);
+  }
+  if (!paymentValid) {
+    return c.json({ error: 'Medio de pago inválido o no pertenece al usuario' }, 400);
+  }
   
   const { data, error } = await supabase
     .from('transactions')
@@ -235,7 +280,7 @@ api.get('/categories', authMiddleware, async (c) => {
   return c.json(data);
 });
 
-api.post('/categories', authMiddleware, zValidator('json', categorySchema), async (c) => {
+api.post('/categories', strictLimiter, authMiddleware, zValidator('json', categorySchema), async (c) => {
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
