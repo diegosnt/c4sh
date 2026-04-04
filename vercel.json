@@ -6,6 +6,18 @@
       "destination": "/api/server.ts"
     },
     {
+      "source": "/",
+      "destination": "/api/server.ts"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/api/server.ts"
+    },
+    {
+      "source": "/home.html",
+      "destination": "/api/server.ts"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/$1"
     }
