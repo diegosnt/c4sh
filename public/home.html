@@ -17,7 +17,7 @@
     })();
   </script>
 </head>
-<body class="text-slate-900 dark:text-slate-100 transition-colors duration-300">
+<body class="transition-colors duration-300">
   
   <!-- MASTER HEADER -->
   <header class="app-header sticky top-0 z-50">
@@ -45,7 +45,7 @@
       <div class="flex flex-wrap items-center gap-3">
         <div class="stat-pill">
           <span class="stat-label">Neto</span>
-          <span id="total-balance" class="stat-value text-slate-900">$0.00</span>
+          <span id="total-balance" class="stat-value">$0.00</span>
         </div>
         <div class="stat-pill">
           <span class="stat-label">Ingresos</span>
@@ -65,10 +65,9 @@
   <!-- MAIN CONTAINER -->
   <main class="container mx-auto px-6 pb-20">
     <div class="main-container">
-      <div class="flex items-center justify-between mb-12 border-b border-slate-100 dark:border-slate-800 pb-8">
+      <div class="flex items-center justify-between mb-12 border-b border-ui pb-8">
         <div>
           <h1 class="text-4xl font-black tracking-tighter uppercase italic">Actividad Reciente</h1>
-          <p class="text-slate-400 font-medium mt-1">Control detallado de tus movimientos diarios.</p>
         </div>
         <div class="h-2 w-24 bg-color-primary rounded-full"></div>
       </div>
@@ -83,12 +82,12 @@
   <div id="transaction-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen p-4">
       <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onclick="closeModal('transaction-modal')"></div>
-      <div class="relative bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl w-full max-w-lg p-12 border-t-8 border-color-warning">
+      <div class="relative bg-surface-card rounded-[3rem] shadow-2xl w-full max-w-lg p-12 border-t-8 border-color-warning">
         <form id="transaction-form" class="space-y-8">
           <input type="hidden" id="transaction-id">
           <h3 class="text-3xl font-black tracking-tighter uppercase italic">Transacción</h3>
           
-          <div class="p-8 bg-slate-50 dark:bg-slate-950 rounded-[2rem] border-2 border-color-warning-soft">
+          <div class="p-8 bg-surface-input rounded-[2rem] border-2 border-color-warning-soft">
             <label class="block text-[10px] font-black uppercase color-warning mb-2 tracking-widest">Monto de Operación</label>
             <div class="flex items-center gap-3">
               <span class="text-4xl text-slate-300 font-light">$</span>

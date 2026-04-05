@@ -136,7 +136,7 @@ function updateSummaryStats() {
   diffEl.textContent = `$${diff.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
   
   if (diff >= 0) {
-    diffEl.className = 'stat-value text-zinc-900';
+    diffEl.className = 'stat-value text-ui';
   } else {
     diffEl.className = 'stat-value text-[#D12052]';
   }
@@ -169,11 +169,11 @@ function renderMatrix() {
   document.getElementById('year-display').textContent = selectedYear;
   
   matrixHeader.innerHTML = `
-    <th class="px-6 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest sticky-col bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 min-w-[180px]">RUBRO</th>
+    <th class="px-6 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest sticky-col bg-surface-input border-r border-ui min-w-[180px]">RUBRO</th>
     ${yearPeriods.map(m => `
       <th class="px-4 py-4 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest min-w-[100px]">${formatPeriod(m)}</th>
     `).join('')}
-    <th class="px-6 py-4 text-right text-[10px] font-black color-warning uppercase tracking-widest min-w-[120px] bg-zinc-100/50 dark:bg-zinc-900/50">ANUAL</th>
+    <th class="px-6 py-4 text-right text-[10px] font-black color-warning uppercase tracking-widest min-w-[120px] bg-surface-input">ANUAL</th>
   `;
   
   let grandTotal = 0;
@@ -201,7 +201,7 @@ function renderMatrix() {
             data-value-id="${valueId}"
             data-estimated="${estimated}" 
             data-real="${real}"
-            class="value-cell w-full text-right p-3 rounded-xl transition-all border-2 border-transparent tabular-nums hover-border-accent ${isActiveReal ? 'bg-color-primary-soft dark:bg-color-primary-soft' : 'bg-color-warning-soft dark:bg-color-warning-soft'}"
+            class="value-cell w-full text-right p-3 rounded-xl transition-all border-2 border-transparent tabular-nums hover-border-accent ${isActiveReal ? 'bg-color-primary-soft' : 'bg-color-warning-soft'}"
           >
             <span class="text-[13px] ${isActiveReal ? 'font-black color-primary' : 'font-medium color-warning opacity-80'}">
               $${displayAmount.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
@@ -214,14 +214,14 @@ function renderMatrix() {
     grandTotal += itemTotal;
     
     return `
-      <tr class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
-        <td class="px-6 py-4 sticky-col border-r border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-800/60">
-          <button onclick="openItemModal(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="font-bold text-sm text-zinc-900 dark:text-zinc-100 uppercase tracking-tighter italic hover-color-warning transition-colors cursor-pointer text-left">
+      <tr class="group hover:bg-surface-input transition-colors">
+        <td class="px-6 py-4 sticky-col border-r border-ui bg-surface-card group-hover:bg-surface-input">
+          <button onclick="openItemModal(${JSON.stringify(item).replace(/"/g, '&quot;')})" class="font-bold text-sm text-ui uppercase tracking-tighter italic hover-color-warning transition-colors cursor-pointer text-left">
             ${escapeHtml(item.name)}
           </button>
         </td>
         ${cells}
-        <td class="px-6 py-4 text-right text-sm font-black text-zinc-900 dark:text-white bg-zinc-50/30 dark:bg-zinc-900/10 tabular-nums">
+        <td class="px-6 py-4 text-right text-sm font-black text-ui bg-surface-input tabular-nums">
           $${itemTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
         </td>
       </tr>
@@ -243,7 +243,7 @@ function renderMatrix() {
   });
   
   matrixFooter.innerHTML = `
-    <td class="px-6 py-6 sticky-col bg-zinc-50 dark:bg-zinc-900 font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 border-r border-zinc-200 dark:border-zinc-800">Cierre Consolidado</td>
+    <td class="px-6 py-6 sticky-col bg-surface-input font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 border-r border-ui">Cierre Consolidado</td>
     ${yearPeriods.map(period => {
       let totalColumn = 0;
       itemsCache.forEach(item => {
@@ -255,7 +255,7 @@ function renderMatrix() {
         }
       });
       return `
-        <td class="px-4 py-6 text-right text-[13px] font-black text-zinc-900 dark:text-white tabular-nums">
+        <td class="px-4 py-6 text-right text-[13px] font-black text-ui tabular-nums">
           $${totalColumn.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
         </td>
       `;

@@ -4,10 +4,40 @@
    ============================================================ */
 
 :root {
-  --primary:    #4B9DA9;   /* Header / acentos de datos  */
-  --accent:     #F6F3C2;   /* Barra de herramientas      */
-  --warning:    #E37434;   /* Borde inferior / botones   */
-  --danger:     #91C6BC;   /* Gastos / botón salir       */
-  --background: #4B9DA9;   /* Fondo del body             */
-  --surface:    #91C6BC;   /* Contenedor principal       */
+  /* Paleta principal */
+  --primary:       #4B9DA9;   /* Header / acentos de datos  */
+  --accent:        #F6F3C2;   /* Barra de herramientas      */
+  --warning:       #E37434;   /* Borde inferior / botones   */
+  --danger:        #91C6BC;   /* Gastos / botón salir       */
+  --background:    #4B9DA9;   /* Fondo del body             */
+  --surface:       #91C6BC;   /* Contenedor principal       */
+
+  /* Superficie y UI */
+  --surface-card:   rgba(255, 255, 255, 0.98);
+  --surface-input:  #ffffff;
+  --surface-header: var(--primary);
+  --border-ui:      #f1f5f9;
+  --border-card:    rgba(0, 0, 0, 0.05);
+  --text-on-ui:     #0f172a;
+}
+
+/* ============================================================
+   DARK MODE — mismos tonos (H y S), lightness ajustada por rol
+   ============================================================ */
+[data-bs-theme="dark"] {
+  /* Paleta principal */
+  --primary:       hsl(187, 55%, 65%);   /* teal claro para contrastar sobre fondo oscuro */
+  --accent:        hsl(57,  25%, 18%);   /* cream muy apagado, no chirría */
+  --warning:       hsl(24,  75%, 62%);   /* naranja levemente más claro */
+  --danger:        hsl(170, 35%, 58%);   /* mint levemente más claro    */
+  --background:    hsl(187, 30%,  7%);   /* teal casi negro — piso      */
+  --surface:       hsl(170, 20%, 12%);   /* mint muy oscuro — contenedor */
+
+  /* Superficie y UI */
+  --surface-card:   hsl(187, 25%, 10%);   /* cards y login                */
+  --surface-input:  hsl(187, 20%, 14%);   /* inputs y selects             */
+  --surface-header: hsl(187, 35%, 13%);   /* header en dark mode          */
+  --border-ui:      hsl(187, 15%, 20%);   /* bordes de tabla y contenedor */
+  --border-card:    rgba(255, 255, 255, 0.05);
+  --text-on-ui:     #f1f5f9;
 }

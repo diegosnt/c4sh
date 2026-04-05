@@ -8,13 +8,14 @@
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--background) !important;
+  color: var(--text-on-ui);
   min-height: 100vh;
   margin: 0;
 }
 
 /* --- Header ------------------------------------------------ */
 .app-header {
-  background-color: var(--primary);
+  background-color: var(--surface-header);
   height: 64px;
   display: flex;
   align-items: center;
@@ -27,7 +28,7 @@ body {
   background-color: var(--accent);
   border-bottom: 4px solid var(--warning);
   padding: 6px 0;
-  color: black;
+  color: var(--text-on-ui);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
@@ -35,14 +36,11 @@ body {
 .main-container {
   background-color: var(--surface);
   border-radius: 40px;
+  border: 1px solid var(--border-card);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
   padding: 40px;
   margin-top: 32px;
   min-height: calc(100vh - 200px);
-}
-.dark .main-container {
-  background-color: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* --- Navegación -------------------------------------------- */
@@ -66,13 +64,14 @@ body {
 
 /* --- Stat pills -------------------------------------------- */
 .stat-pill {
-  background: white;
+  background: var(--surface-card);
   padding: 6px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-card);
   display: flex;
   align-items: center;
   gap: 10px;
+  color: var(--text-on-ui);
 }
 .stat-label {
   font-size: 9px;
@@ -106,15 +105,11 @@ body {
 input,
 select {
   border-radius: 12px !important;
-  border: 2px solid #f1f5f9 !important;
+  border: 2px solid var(--border-ui) !important;
   padding: 12px 16px !important;
+  background-color: var(--surface-input) !important;
+  color: var(--text-on-ui) !important;
   transition: all 0.2s;
-}
-.dark input,
-.dark select {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: white;
 }
 input:focus,
 select:focus {
@@ -134,9 +129,8 @@ select:focus {
 .table-container {
   border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--border-ui);
 }
-.dark .table-container { border-color: #1e293b; }
 
 .sticky-col {
   position: sticky;
@@ -157,16 +151,13 @@ select:focus {
 }
 
 .login-card {
-  background-color: rgba(255, 255, 255, 0.98);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-card);
   border-radius: 40px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
   padding: 48px;
   width: 100%;
   max-width: 420px;
-}
-.dark .login-card {
-  background-color: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .login-title {
@@ -207,6 +198,22 @@ select:focus {
   display: none;
 }
 .login-error.visible { display: block; }
+
+/* ============================================================
+   UTILIDADES SEMÁNTICAS — adaptan en dark mode via variables
+   ============================================================ */
+
+.bg-surface-card   { background-color: var(--surface-card); }
+.bg-surface-input  { background-color: var(--surface-input); }
+.text-ui           { color: var(--text-on-ui); }
+.border-ui         { border-color: var(--border-ui); }
+.divide-ui > * + * { border-color: var(--border-ui); }
+
+/* Hover en filas de tabla (dark mode) */
+[data-bs-theme="dark"] #matrix-body tr:hover td,
+[data-bs-theme="dark"] #matrix-body tr:hover .sticky-col {
+  background-color: var(--surface-input) !important;
+}
 
 /* ============================================================
    UTILIDADES DE COLOR — derivadas de theme.css
