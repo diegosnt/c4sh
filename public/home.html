@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>c4sh - Mis Finanzas</title>
+  <title>c4sh — Transacciones</title>
   
-  <!-- Tailwind CSS Output -->
   <link rel="stylesheet" href="css/style.css">
-  
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <script>
     (function() {
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -15,191 +17,120 @@
     })();
   </script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-screen">
-  <nav class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
-    <div class="container mx-auto flex items-center justify-between px-4">
-      <a class="text-2xl font-bold dark:text-white" href="#">c4sh</a>
-      <div class="flex items-center space-x-2">
-        <button id="theme-toggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 h-9 px-3">🌓</button>
-        <button id="logout-btn" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-red-600 text-red-600 hover:bg-red-600 hover:text-white h-9 px-3">Salir</button>
+<body class="text-slate-900 dark:text-slate-100 transition-colors duration-300">
+  
+  <!-- MASTER HEADER -->
+  <header class="app-header sticky top-0 z-50">
+    <div class="container mx-auto px-6 flex items-center justify-between">
+      <div class="flex items-center" style="gap:2rem">
+        <a href="/home.html" class="flex items-center gap-3">
+          <span class="text-2xl font-black tracking-tighter uppercase italic">c4sh</span>
+        </a>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,0.25)"></div>
+        <nav class="flex items-center gap-6">
+          <a href="/home.html" class="nav-link nav-link-active">Transacciones</a>
+          <a href="/estimated.html" class="nav-link px-4">Presupuesto</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-6">
+        <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors">🌓</button>
+        <button id="logout-btn" class="text-[10px] font-black text-white bg-color-danger px-4 py-2 rounded-lg hover:opacity-80 transition-all uppercase tracking-widest">Salir</button>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <main class="container mx-auto py-10 px-4">
-    <h1 class="text-3xl font-bold mb-6 dark:text-white">Mis Finanzas</h1>
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full">
-        <div class="p-6 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Saldo Total</p>
-          <h3 id="total-balance" class="text-2xl font-bold dark:text-white mb-0">$0.00</h3>
+  <!-- MASTER TOOLBELT BAR -->
+  <section class="toolbelt-bar">
+    <div class="container mx-auto px-6 flex flex-wrap items-center justify-between gap-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="stat-pill">
+          <span class="stat-label">Neto</span>
+          <span id="total-balance" class="stat-value text-slate-900">$0.00</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-label">Ingresos</span>
+          <span id="total-income" class="stat-value color-primary">$0.00</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-label">Gastos</span>
+          <span id="total-expense" class="stat-value color-danger">$0.00</span>
         </div>
       </div>
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full">
-        <div class="p-6 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Ingresos</p>
-          <h3 id="total-income" class="text-2xl font-bold text-green-600 dark:text-green-400 mb-0">$0.00</h3>
-        </div>
-      </div>
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full">
-        <div class="p-6 text-center">
-          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Gastos</p>
-          <h3 id="total-expense" class="text-2xl font-bold text-red-600 dark:text-red-400 mb-0">$0.00</h3>
-        </div>
-      </div>
+      <button id="open-transaction-modal-btn" class="btn-brand text-[11px] uppercase tracking-widest">
+        + Nueva Transacción
+      </button>
     </div>
+  </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-      <div class="md:col-span-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div class="p-6">
-            <h5 class="text-lg font-semibold mb-4 dark:text-white">Nueva Transacción</h5>
-            <form id="transaction-form">
-              <input type="hidden" id="transaction-id">
-              <div class="mb-3">
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="amount">Monto</label>
-                <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="number" id="amount" step="0.01" placeholder="0.00" required>
-              </div>
-
-              <div class="mb-3">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-sm font-medium dark:text-gray-200" for="category">Categoría</label>
-                  <div class="flex space-x-2">
-                    <button type="button" id="edit-cat-btn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xs font-bold" title="Editar Categoría">✏️</button>
-                    <button type="button" id="add-cat-btn" class="text-blue-600 hover:text-blue-700 text-xs font-bold">+ Agregar</button>
-                  </div>
-                </div>
-                <select id="category" class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                  <option value="">Seleccionar...</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-sm font-medium dark:text-gray-200" for="payment-method">Medio de Pago</label>
-                  <div class="flex space-x-2">
-                    <button type="button" id="edit-pm-btn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xs font-bold" title="Editar Medio de Pago">✏️</button>
-                    <button type="button" id="add-pm-btn" class="text-blue-600 hover:text-blue-700 text-xs font-bold">+ Agregar</button>
-                  </div>
-                </div>
-                <select id="payment-method" class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                  <option value="">Seleccionar...</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="date">Fecha</label>
-                <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="date" id="date">
-              </div>
-
-              <div class="mb-3">
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="description">Descripción</label>
-                <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="text" id="description" placeholder="Ej: Supermercado, Sueldo...">
-              </div>
-
-              <div class="mt-4">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">Guardar Transacción</button>
-              </div>
-            </form>
-          </div>
+  <!-- MAIN CONTAINER -->
+  <main class="container mx-auto px-6 pb-20">
+    <div class="main-container">
+      <div class="flex items-center justify-between mb-12 border-b border-slate-100 dark:border-slate-800 pb-8">
+        <div>
+          <h1 class="text-4xl font-black tracking-tighter uppercase italic">Actividad Reciente</h1>
+          <p class="text-slate-400 font-medium mt-1">Control detallado de tus movimientos diarios.</p>
         </div>
+        <div class="h-2 w-24 bg-color-primary rounded-full"></div>
       </div>
 
-      <div class="md:col-span-8">
-        <h5 class="text-lg font-semibold mb-4 dark:text-white">Actividad Reciente</h5>
-        <div id="transaction-list">
-          <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-center shadow-sm">
-            No hay transacciones todavía.
-          </div>
-        </div>
+      <div id="transaction-list" class="grid grid-cols-1 gap-4">
+        <!-- Renderizado dinámico -->
       </div>
     </div>
   </main>
 
-  <!-- Modales -->
-  <!-- Modal Categoría -->
-  <div id="category-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 transition-opacity bg-black/50 backdrop-blur-sm" aria-hidden="true" onclick="closeModal('category-modal')"></div>
-      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-      <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-gray-700">
-        <form id="category-modal-form" class="p-6">
-          <input type="hidden" id="modal-category-id">
-          <h3 class="text-lg font-bold leading-6 text-gray-900 dark:text-white mb-4" id="category-modal-title">Nueva Categoría</h3>
+  <!-- Modal Transacción -->
+  <div id="transaction-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onclick="closeModal('transaction-modal')"></div>
+      <div class="relative bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl w-full max-w-lg p-12 border-t-8 border-color-warning">
+        <form id="transaction-form" class="space-y-8">
+          <input type="hidden" id="transaction-id">
+          <h3 class="text-3xl font-black tracking-tighter uppercase italic">Transacción</h3>
           
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="modal-category-name">Nombre</label>
-              <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="text" id="modal-category-name" placeholder="Ej: Alimentación, Transporte..." required>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="modal-category-type">Tipo</label>
-                <select id="modal-category-type" class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                  <option value="expense">Gasto</option>
-                  <option value="income">Ingreso</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="modal-category-icon">Icono (Emoji)</label>
-                <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="text" id="modal-category-icon" placeholder="Ej: 🍕, 🚗, 💰" value="🏷️">
-              </div>
+          <div class="p-8 bg-slate-50 dark:bg-slate-950 rounded-[2rem] border-2 border-color-warning-soft">
+            <label class="block text-[10px] font-black uppercase color-warning mb-2 tracking-widest">Monto de Operación</label>
+            <div class="flex items-center gap-3">
+              <span class="text-4xl text-slate-300 font-light">$</span>
+              <input class="w-full bg-transparent border-none p-0 focus:ring-0 text-5xl font-black tabular-nums tracking-tighter" type="number" id="amount" step="0.01" placeholder="0.00" required>
             </div>
           </div>
 
-          <div class="mt-6 flex flex-row-reverse space-x-2 space-x-reverse">
-            <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition-colors">Guardar</button>
-            <button type="button" onclick="closeModal('category-modal')" class="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-bold py-2 px-6 rounded transition-colors">Cancelar</button>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Categoría</label>
+                <button type="button" id="add-cat-btn" class="color-primary text-[9px] font-black uppercase">+ Nueva</button>
+              </div>
+              <select id="category" class="w-full font-bold text-sm" required></select>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Medio de Pago</label>
+                <button type="button" id="add-pm-btn" class="color-primary text-[9px] font-black uppercase">+ Nuevo</button>
+              </div>
+              <select id="payment-method" class="w-full font-bold text-sm" required></select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Fecha</label>
+              <input class="w-full font-bold text-sm" type="date" id="date">
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Nota</label>
+              <input class="w-full font-bold text-sm" type="text" id="description" placeholder="Ej: Compra mensual">
+            </div>
+          </div>
+
+          <div class="mt-12 flex gap-4">
+            <button type="button" onclick="closeModal('transaction-modal')" class="flex-1 py-5 font-black text-slate-400 hover:text-slate-900 transition-colors uppercase">Cancelar</button>
+            <button type="submit" id="submit-transaction-btn" class="flex-1 py-5 bg-color-primary text-white font-black rounded-2xl shadow-xl shadow-orange-500/30 uppercase tracking-widest">Guardar</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Modal Medio de Pago -->
-  <div id="payment-method-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 transition-opacity bg-black/50 backdrop-blur-sm" aria-hidden="true" onclick="closeModal('payment-method-modal')"></div>
-      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-      <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-gray-700">
-        <form id="payment-method-modal-form" class="p-6">
-          <input type="hidden" id="modal-pm-id">
-          <h3 class="text-lg font-bold leading-6 text-gray-900 dark:text-white mb-4" id="pm-modal-title">Nuevo Medio de Pago</h3>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="modal-pm-name">Nombre</label>
-              <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="text" id="modal-pm-name" placeholder="Ej: Efectivo, Tarjeta BBVA..." required>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="modal-pm-type">Tipo</label>
-                <select id="modal-pm-type" class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                  <option value="cash">Efectivo</option>
-                  <option value="debit">Débito</option>
-                  <option value="credit">Crédito</option>
-                  <option value="other">Otro</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="modal-pm-icon">Icono (Emoji)</label>
-                <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="text" id="modal-pm-icon" placeholder="Ej: 💵, 💳, 🏦" value="💳">
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-6 flex flex-row-reverse space-x-2 space-x-reverse">
-            <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition-colors">Guardar</button>
-            <button type="button" onclick="closeModal('payment-method-modal')" class="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-bold py-2 px-6 rounded transition-colors">Cancelar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
+  <script type="module" src="js/finance.js"></script>
   <script>
     const themeToggle = document.getElementById('theme-toggle');
     themeToggle.addEventListener('click', () => {
@@ -209,6 +140,5 @@
       localStorage.setItem('theme', newTheme);
     });
   </script>
-  <script type="module" src="js/finance.js"></script>
 </body>
 </html>

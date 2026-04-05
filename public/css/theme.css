@@ -1,0 +1,13 @@
+/* ============================================================
+   c4sh — PALETA DE COLORES
+   Cambiá solo este archivo para probar combinaciones.
+   ============================================================ */
+
+:root {
+  --primary:    #4B9DA9;   /* Header / acentos de datos  */
+  --accent:     #F6F3C2;   /* Barra de herramientas      */
+  --warning:    #E37434;   /* Borde inferior / botones   */
+  --danger:     #91C6BC;   /* Gastos / botón salir       */
+  --background: #4B9DA9;   /* Fondo del body             */
+  --surface:    #91C6BC;   /* Contenedor principal       */
+}

@@ -102,6 +102,21 @@ const paymentMethodSchema = z.object({
   icon: z.string().trim().max(10, "Emoji inválido").optional().nullable().default('💳')
 });
 
+const estimatedExpenseItemSchema = z.object({
+  name: z.string().trim().min(1, "Nombre requerido").max(100, "Máximo 100 caracteres")
+});
+
+const estimatedExpenseValueSchema = z.object({
+  item_id: z.string().uuid({ message: "ID de item inválido" }),
+  period: z.string().trim().min(1, "Período requerido").max(20, "Máximo 20 caracteres"),
+  estimated_amount: z.union([z.string(), z.number()])
+    .transform((val) => typeof val === 'string' ? parseFloat(val) : val)
+    .refine((val) => !isNaN(val) && val >= 0, { message: "Monto estimado inválido" }),
+  real_amount: z.union([z.string(), z.number()])
+    .transform((val) => typeof val === 'string' ? parseFloat(val) : val)
+    .refine((val) => !isNaN(val) && val >= 0, { message: "Monto real inválido" })
+});
+
 const transactionSchema = z.object({
   amount: z.union([z.string(), z.number()])
     .transform((val) => typeof val === 'string' ? parseFloat(val) : val)
@@ -323,6 +338,135 @@ api.delete('/transactions/:id', authMiddleware, zValidator('param', uuidParamSch
   return c.body(null, 204);
 });
 
+// --- ESTIMATED EXPENSE ITEMS ---
+api.get('/estimated-expense-items', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  
+  const { data, error } = await supabase
+    .from('estimated_expense_items')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true });
+  
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.post('/estimated-expense-items', strictLimiter, authMiddleware, zValidator('json', estimatedExpenseItemSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { name } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('estimated_expense_items')
+    .insert({ user_id: user.id, name })
+    .select()
+    .single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.put('/estimated-expense-items/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', estimatedExpenseItemSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { name } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('estimated_expense_items')
+    .update({ name })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.delete('/estimated-expense-items/:id', authMiddleware, zValidator('param', uuidParamSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { error } = await supabase.from('estimated_expense_items').delete().eq('id', id).eq('user_id', user.id);
+  if (error) return c.json({ error: error.message }, 500);
+  return c.body(null, 204);
+});
+
+// --- ESTIMATED EXPENSE VALUES ---
+api.get('/estimated-expense-values', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const periods = c.req.query('periods');
+  
+  let query = supabase
+    .from('estimated_expense_values')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('period', { ascending: true });
+  
+  if (periods) {
+    const periodList = periods.split(',');
+    query = query.in('period', periodList);
+  }
+  
+  const { data, error } = await query;
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.post('/estimated-expense-values', strictLimiter, authMiddleware, zValidator('json', estimatedExpenseValueSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { item_id, period, estimated_amount, real_amount } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('estimated_expense_values')
+    .insert({ user_id: user.id, item_id, period, estimated_amount, real_amount })
+    .select()
+    .single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.put('/estimated-expense-values/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', estimatedExpenseValueSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { item_id, period, estimated_amount, real_amount } = c.req.valid('json');
+  
+  const { data, error } = await supabase
+    .from('estimated_expense_values')
+    .update({ item_id, period, estimated_amount, real_amount, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+    
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.delete('/estimated-expense-values/:id', authMiddleware, zValidator('param', uuidParamSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { error } = await supabase.from('estimated_expense_values').delete().eq('id', id).eq('user_id', user.id);
+  if (error) return c.json({ error: error.message }, 500);
+  return c.body(null, 204);
+});
+
 // --- MAIN APP ---
 
 // Montar la API
@@ -332,6 +476,7 @@ app.route('/api', api);
 app.get('/', (c) => serveHtmlWithConfig(c, 'index.html'));
 app.get('/index.html', (c) => serveHtmlWithConfig(c, 'index.html'));
 app.get('/home.html', (c) => serveHtmlWithConfig(c, 'home.html'));
+app.get('/estimated.html', (c) => serveHtmlWithConfig(c, 'estimated.html'));
 
 // Servir el resto de archivos estáticos (css, js, etc.)
 app.use('/*', serveStatic({ root: './public' }));

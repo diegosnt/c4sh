@@ -19,14 +19,13 @@ loginForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true
   submitBtn.textContent = 'Iniciando...'
   errorDiv.textContent = ''
+  errorDiv.classList.remove('visible')
 
   try {
     await signIn(email, password)
   } catch (err) {
-    const msgEl = document.createElement('div');
-    msgEl.className = 'p-3 rounded-md bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-center text-sm mb-4 shadow-sm';
-    msgEl.textContent = err.message;
-    errorDiv.replaceChildren(msgEl);
+    errorDiv.textContent = err.message;
+    errorDiv.classList.add('visible');
     submitBtn.disabled = false
     submitBtn.textContent = 'Iniciar sesión'
   }

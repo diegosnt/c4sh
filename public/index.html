@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>c4sh - Login</title>
-  
-  <!-- Tailwind CSS Output -->
+  <title>c4sh — Login</title>
+
   <link rel="stylesheet" href="css/style.css">
-  
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <script>
     (function() {
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -15,45 +17,62 @@
     })();
   </script>
 </head>
-<body class="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-  <div class="absolute top-4 right-4 z-10">
-    <button id="theme-toggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 h-9 px-3">🌓</button>
-  </div>
+<body class="login-page">
 
-  <div class="container mx-auto px-4 w-full max-w-[400px]">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      <div class="p-10">
-        <h1 class="text-center text-3xl font-bold mb-1 dark:text-white">c4sh</h1>
-        <p class="text-center text-gray-500 dark:text-gray-400 mb-4">Registro de finanzas</p>
-        
-        <div id="error"></div>
-        
-        <form id="login-form">
-          <div class="mb-3">
-            <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="email">Email</label>
-            <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="email" id="email" name="email" placeholder="tu@email.com" required>
-          </div>
+  <button id="theme-toggle" style="position:absolute;top:1rem;right:1rem;z-index:10;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;border-radius:0.75rem;background:rgba(255,255,255,0.15);border:none;cursor:pointer;font-size:1rem;">🌓</button>
 
-          <div class="mb-3">
-            <label class="block text-sm font-medium mb-1 dark:text-gray-200" for="password">Contraseña</label>
-            <input class="block w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" type="password" id="password" name="password" required>
-          </div>
-
-          <div class="mt-4">
-            <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">Iniciar sesión</button>
-          </div>
-        </form>
-      </div>
+  <div class="login-card">
+    <div style="margin-bottom:32px">
+      <p class="login-title">c4sh</p>
+      <p class="login-subtitle">Control de finanzas personales</p>
     </div>
+
+    <div id="error" class="login-error"></div>
+
+    <form id="login-form" style="display:flex;flex-direction:column;gap:20px">
+      <div>
+        <label class="login-label" for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="tu@email.com"
+          required
+          class="w-full font-bold text-sm"
+          style="width:100%"
+        >
+      </div>
+
+      <div>
+        <label class="login-label" for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="••••••••"
+          required
+          class="w-full font-bold text-sm"
+          style="width:100%"
+        >
+      </div>
+
+      <button
+        type="submit"
+        id="submit-btn"
+        class="btn-brand"
+        style="width:100%;margin-top:8px;text-align:center;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase"
+      >
+        Iniciar sesión
+      </button>
+    </form>
   </div>
 
   <script>
-    const themeToggle = document.getElementById('theme-toggle');
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-bs-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-bs-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', next);
+      localStorage.setItem('theme', next);
     });
   </script>
   <script type="module" src="js/app.js"></script>

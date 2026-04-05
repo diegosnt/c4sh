@@ -1,98 +1,171 @@
-# 💰 c4sh - Finanzas Personales (Security-First)
+# C4SH — Finanzas Personales
 
-**c4sh** es una aplicación ultra-minimalista, moderna y blindada para el seguimiento de finanzas personales. Diseñada bajo la filosofía de "menos es más", se enfoca en la velocidad de uso, la legibilidad extrema y la protección total de datos sensibles.
+Aplicación minimalista para el seguimiento de transacciones y planificación de presupuesto anual. Diseñada con foco en velocidad de uso, seguridad estricta y una UI completamente tematizable.
 
-## 🚀 Tech Stack
+---
 
-- **Backend**: [Hono](https://hono.dev/) + [Node.js](https://nodejs.org/). Performance extrema con arquitectura de middleware moderna.
-- **Frontend**: [Tailwind CSS](https://tailwindcss.com/) + Vanilla JS. UI basada en utilidades con un peso final de CSS < 15KB.
-- **Base de Datos & Auth**: [Supabase](https://supabase.com/) (PostgreSQL) con **Row Level Security (RLS)** estricto.
-- **Validación**: [Zod](https://zod.dev/) con esquemas de blindaje contra inyección y denegación de servicio.
+## Tech Stack
 
-## 🛡️ Blindaje de Seguridad Industrial (Búnker MVP)
+| Capa | Tecnología |
+|------|-----------|
+| Backend | [Hono](https://hono.dev/) + Node.js via [tsx](https://github.com/privatenumber/tsx) |
+| Frontend | Tailwind CSS (compilado) + Vanilla JS (ES Modules) |
+| Base de datos & Auth | [Supabase](https://supabase.com/) (PostgreSQL + RLS) |
+| Validación | [Zod](https://zod.dev/) |
+| Logging | [Pino](https://getpino.io/) |
 
-La aplicación implementa múltiples capas de protección activa:
+---
 
-1.  **Row Level Security (RLS) Avanzado**: Aislamiento total a nivel de base de datos. Ningún usuario puede acceder, editar o borrar datos de otro, validado directamente en PostgreSQL.
-2.  **Hono Secure Headers**: Implementación de CSP (Content Security Policy), HSTS (Strict-Transport-Security), X-Frame-Options (Anti-Clickjacking) y X-Content-Type-Options (Anti-Sniffing).
-3.  **Validación & Sanitización Estricta**:
-    - Esquemas de Zod con límites de longitud (`.max()`) y validación de tipos.
-    - Sanitización manual de SQL para prevenir ataques de inyección en campos de texto.
-    - Control de caracteres nulos y escape de secuencias peligrosas.
-4.  **Rate Limiting Dinámico**: Protección contra ataques de fuerza bruta (100 req/min por IP).
-5.  **Aislamiento de Auth**: Separación de datos sensibles (`auth.users`) de datos de perfil (`profiles`).
+## Páginas
 
-## 🌓 Características Pro
+### Login (`/index.html`)
+- Formulario de autenticación integrado con Supabase Auth
+- Diseño consistente con el resto de la app: misma tipografía, paleta y card flotante
+- Manejo de errores con clase `.login-error` desde `app.css`
 
-- **Gestión Total de Entidades**: Modales interactivos de Tailwind CSS para crear y editar Categorías y Medios de Pago sin salir del dashboard.
-- **Dashboard en Tiempo Real**: Resumen de Saldo, Ingresos y Gastos con cálculo instantáneo.
-- **Personalización Visual**: Soporte completo para Emojis en Categorías (🏠, 🍔, 💰) y Medios de Pago (💳, 🏦, 💵).
-- **Control de Fechas**: Registro de transacciones con fechas pasadas o futuras mediante un Date Picker nativo.
-- **Modo Dual Automático**: Detección de preferencia del sistema (Dark/Light) con persistencia en `localStorage`.
-- **Zero Latency UI**: Interfaz optimizada para carga instantánea y feedback visual inmediato en la edición de gastos.
+### Transacciones (`/home.html`)
+- Registro de ingresos y gastos con categoría, medio de pago, fecha y nota
+- Dashboard en tiempo real: saldo neto, total ingresos, total gastos
+- CRUD completo: crear, editar y eliminar transacciones
+- Gestión de categorías y medios de pago desde modales inline
 
-## 🛠️ Instalación y Setup
+### Presupuesto Anual (`/estimated.html`)
+- Definición de rubros de gasto con estimado mensual y ejecución real
+- Tabla matricial: rubros × 12 meses del año seleccionado
+- Edición de montos (planificado / ejecutado) por celda desde modal
+- Totales por rubro, por mes y consolidado anual
+- Renombrar rubros tocando su nombre directamente en la tabla
+- Selector de año para navegar históricos
 
-### 1. Clonar y dependencias
+---
+
+## Arquitectura CSS
+
+El sistema de diseño está separado en tres archivos:
+
+```
+public/css/
+├── style.css    — Output compilado de Tailwind (no editar)
+├── theme.css    — Paleta de colores: 6 variables CSS
+└── app.css      — Componentes compartidos + utilidades de color
+```
+
+### Cambiar paleta de colores
+
+Solo se edita `theme.css`. Toda la app se actualiza automáticamente:
+
+```css
+:root {
+  --primary:    #4B9DA9;   /* Header / acentos de datos  */
+  --accent:     #F6F3C2;   /* Barra de herramientas      */
+  --warning:    #E37434;   /* Borde inferior / botones   */
+  --danger:     #91C6BC;   /* Gastos / botón salir       */
+  --background: #4B9DA9;   /* Fondo del body             */
+  --surface:    #91C6BC;   /* Contenedor principal       */
+}
+```
+
+### Clases utilitarias de color
+
+Los HTML y JS usan clases semánticas en lugar de hex hardcodeados:
+
+| Clase | Propiedad |
+|-------|-----------|
+| `color-primary` | `color: var(--primary)` |
+| `color-warning` | `color: var(--warning)` |
+| `color-danger` | `color: var(--danger)` |
+| `bg-color-primary` | `background-color: var(--primary)` |
+| `bg-color-danger` | `background-color: var(--danger)` |
+| `bg-color-primary-soft` | fondo primario al 8% de opacidad |
+| `bg-color-warning-soft` | fondo warning al 8% de opacidad |
+| `border-color-primary` | `border-color: var(--primary)` |
+| `border-color-warning` | `border-color: var(--warning)` |
+| `border-color-primary-soft` | borde primario al 10% de opacidad |
+| `border-color-warning-soft` | borde warning al 10% de opacidad |
+| `hover-color-primary` | color primario en hover |
+| `hover-color-warning` | color warning en hover |
+| `hover-color-danger` | color danger en hover |
+| `hover-border-accent` | borde accent en hover |
+
+---
+
+## Seguridad
+
+- **Row Level Security (RLS)**: aislamiento total a nivel de base de datos por `user_id`
+- **Secure Headers** (Hono): CSP, HSTS, X-Frame-Options, X-Content-Type-Options
+- **Validación con Zod**: límites de longitud, tipos y sanitización contra inyección SQL
+- **Rate Limiting**: 100 req/min por IP via `hono-rate-limiter`
+- **Separación auth/perfil**: `auth.users` separado de datos de aplicación
+
+---
+
+## Instalación
+
+### 1. Dependencias
 ```bash
 pnpm install
 ```
 
-### 2. Configuración de Entorno (`.env`)
+### 2. Variables de entorno (`.env`)
 ```env
 SUPABASE_URL=tu_url_de_supabase
 SUPABASE_ANON_KEY=tu_anon_key_de_supabase
 PORT=3001
 ```
 
-### 3. Base de Datos (SQL Editor)
-Ejecutar los scripts de la carpeta `/sql` en este orden:
-1.  `00_init.sql` (Tablas base)
-2.  `01_rls.sql` (Políticas iniciales)
-3.  `02_payment_methods.sql` (Soporte para medios de pago)
-4.  `03_pm_icon.sql` (Iconos para medios de pago)
-5.  `04_security_audit.sql` (Sello de seguridad y blindaje final)
-6.  `05_profiles_insert_rls.sql` (Policy INSERT faltante en profiles)
-
-### 4. Desarrollo
+### 3. Desarrollo
 ```bash
-# Terminal 1: Servidor Backend
+# Terminal 1 — Servidor backend
 pnpm dev
 
-# Terminal 2: Compilador de Tailwind (Watcher)
+# Terminal 2 — Compilador Tailwind (watcher)
 pnpm dev:css
 ```
 
-## 📂 Estructura del Proyecto
+---
 
-```text
+## Estructura del proyecto
+
+```
+c4sh/
 ├── api/
-│   ├── lib/            # Cliente Supabase y utilidades
-│   ├── middleware/     # Auth y lógica de blindaje
-│   └── server.ts       # Servidor Hono, Zod Schemas y Endpoints
+│   ├── lib/                    — Cliente Supabase
+│   ├── middleware/              — Autenticación JWT
+│   └── server.ts               — Servidor Hono, endpoints y schemas Zod
 ├── public/
-│   ├── css/            # Tailwind Input & Compiled Style
-│   ├── js/             # Lógica de Dashboard, Auth y Supabase
-│   └── home.html       # UI Principal con Modales
-├── sql/                # Scripts de evolución de DB y Seguridad
-└── tailwind.config.js  # Configuración del motor de diseño
+│   ├── css/
+│   │   ├── theme.css           — Paleta de colores (único archivo a modificar)
+│   │   ├── app.css             — Componentes, login, utilidades de color
+│   │   ├── input.css           — Entry point de Tailwind
+│   │   └── style.css           — CSS compilado (generado, no editar)
+│   ├── js/
+│   │   ├── auth.js             — Gestión de sesión con Supabase
+│   │   ├── app.js              — Lógica del login
+│   │   ├── finance.js          — Lógica de Transacciones
+│   │   ├── estimated.js        — Lógica de Presupuesto Anual
+│   │   └── supabase-client.js  — Cliente Supabase frontend
+│   ├── index.html              — Login
+│   ├── home.html               — Transacciones
+│   └── estimated.html          — Presupuesto Anual
+├── sql/                        — Scripts de evolución de base de datos
+├── tailwind.config.js
+└── vercel.json
 ```
 
 ---
 
-## ✅ Tareas Pendientes
+## Tareas pendientes
 
-### Optimización
+### Performance
+- [ ] Paginación en `/api/transactions` — soporte para `?limit=` y `?offset=`
+- [ ] Índices en columnas `user_id` en todas las tablas
+- [ ] Cachear el cliente Supabase autenticado por token (evitar instanciar en cada request)
+- [ ] Recargar solo los datos que cambian post-operación (no toda la lista)
+- [ ] Actualizaciones incrementales del DOM en el listado de transacciones
 
-- [ ] **[O1] Implementar paginación en `/api/transactions`** — Agregar soporte para `?limit=` y `?offset=` (o cursor-based) en el endpoint de transacciones.
-- [ ] **[O2] Crear índices en columnas `user_id`** — `CREATE INDEX` en `categories.user_id`, `transactions.user_id`, `payment_methods.user_id`.
-- [ ] **[O3] Cachear el cliente Supabase autenticado por token** — Evitar instanciar `createClient()` en cada request.
-- [ ] **[O4] Recargar solo los datos que cambian post-operación** — Después de guardar una transacción, solo recargar transacciones.
-- [ ] **[O5] Optimizar re-renders del listado** — Usar actualizaciones incrementales del DOM en lugar de reconstruir toda la lista.
-- [ ] **[O6] Separar el onboarding del flujo de carga de datos** — Crear un endpoint o función dedicada para inicializar datos del primer uso.
-- [ ] **[O7] Agregar estados de loading y error en la UI** — Mostrar feedback visual mientras se cargan datos y cuando una operación falla.
-- [ ] **[O8] Agregar endpoints `DELETE` para categorías y medios de pago** — Completar el CRUD de entidades.
-- [ ] **[O9] Reemplazar `supabase-minimal.js` por el SDK oficial** — Usar `@supabase/supabase-js` en el frontend para tener token refresh, manejo de errores robusto y menos mantenimiento.
+### UX
+- [ ] Estados de loading y error en la UI (feedback visual durante operaciones)
+- [ ] Endpoints DELETE para categorías y medios de pago
 
----
-Diseñado con ❤️ por un arquitecto apasionado por la seguridad y el código limpio. ¡A darle que vuela! 🚀💰🛡️
+### Deuda técnica
+- [ ] Reemplazar `supabase-minimal.js` por el SDK oficial en todos los módulos frontend
