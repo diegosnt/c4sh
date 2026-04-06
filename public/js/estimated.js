@@ -233,6 +233,7 @@ function renderMatrix() {
       return `
         <td class="px-0 py-1 ${colClass}${isPendingAlert ? ' cell-pending' : ''}">
           <div class="cell-wrap">
+            ${checkBtn}
             <button
               data-item-id="${escapeHtml(item.id)}"
               data-item-name="${escapeHtml(item.name)}"
@@ -247,7 +248,6 @@ function renderMatrix() {
                 $${displayAmount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </button>
-            ${checkBtn}
           </div>
         </td>
       `;
