@@ -102,8 +102,16 @@ const paymentMethodSchema = z.object({
   icon: z.string().trim().max(10, "Emoji inválido").optional().nullable().default('💳')
 });
 
+const itemTypeSchema = z.object({
+  name: z.string().trim().min(1, "Nombre requerido").max(50, "Máximo 50 caracteres")
+});
+
 const estimatedExpenseItemSchema = z.object({
-  name: z.string().trim().min(1, "Nombre requerido").max(100, "Máximo 100 caracteres")
+  name: z.string().trim().min(1, "Nombre requerido").max(100, "Máximo 100 caracteres"),
+  type_id: z.string().uuid().optional().nullable(),
+  icon: z.string().trim().max(10).optional().nullable(),
+  order_index: z.number().int().optional().nullable(),
+  notes: z.string().trim().max(500).optional().nullable()
 });
 
 const estimatedExpenseValueSchema = z.object({
@@ -114,7 +122,12 @@ const estimatedExpenseValueSchema = z.object({
     .refine((val) => !isNaN(val) && val >= 0, { message: "Monto estimado inválido" }),
   real_amount: z.union([z.string(), z.number()])
     .transform((val) => typeof val === 'string' ? parseFloat(val) : val)
-    .refine((val) => !isNaN(val) && val >= 0, { message: "Monto real inválido" })
+    .refine((val) => !isNaN(val) && val >= 0, { message: "Monto real inválido" }),
+  paid: z.boolean().optional().default(false)
+});
+
+const estimatedExpenseValuePaidSchema = z.object({
+  paid: z.boolean()
 });
 
 const transactionSchema = z.object({
@@ -338,6 +351,65 @@ api.delete('/transactions/:id', authMiddleware, zValidator('param', uuidParamSch
   return c.body(null, 204);
 });
 
+// --- ITEM TYPES ---
+api.get('/item-types', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { data, error } = await supabase
+    .from('item_types')
+    .select('id, name')
+    .eq('user_id', user.id)
+    .order('name', { ascending: true });
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.post('/item-types', strictLimiter, authMiddleware, zValidator('json', itemTypeSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { name } = c.req.valid('json');
+  const { data, error } = await supabase
+    .from('item_types')
+    .insert({ user_id: user.id, name })
+    .select('id, name')
+    .single();
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.put('/item-types/:id', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', itemTypeSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { name } = c.req.valid('json');
+  const { data, error } = await supabase
+    .from('item_types')
+    .update({ name })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('id, name')
+    .single();
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.delete('/item-types/:id', authMiddleware, zValidator('param', uuidParamSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { error } = await supabase
+    .from('item_types')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+  if (error) return c.json({ error: error.message }, 500);
+  return c.body(null, 204);
+});
+
 // --- ESTIMATED EXPENSE ITEMS ---
 api.get('/estimated-expense-items', authMiddleware, async (c) => {
   const user = c.get('user');
@@ -348,6 +420,7 @@ api.get('/estimated-expense-items', authMiddleware, async (c) => {
     .from('estimated_expense_items')
     .select('*')
     .eq('user_id', user.id)
+    .order('order_index', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: true });
   
   if (error) return c.json({ error: error.message }, 500);
@@ -358,14 +431,14 @@ api.post('/estimated-expense-items', strictLimiter, authMiddleware, zValidator('
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const { name } = c.req.valid('json');
-  
+  const { name, type_id, icon, order_index, notes } = c.req.valid('json');
+
   const { data, error } = await supabase
     .from('estimated_expense_items')
-    .insert({ user_id: user.id, name })
+    .insert({ user_id: user.id, name, type_id: type_id || null, icon: icon || null, order_index: order_index ?? null, notes: notes || null })
     .select()
     .single();
-    
+
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
 });
@@ -375,16 +448,16 @@ api.put('/estimated-expense-items/:id', authMiddleware, zValidator('param', uuid
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
   const { id } = c.req.valid('param');
-  const { name } = c.req.valid('json');
-  
+  const { name, type_id, icon, order_index, notes } = c.req.valid('json');
+
   const { data, error } = await supabase
     .from('estimated_expense_items')
-    .update({ name })
+    .update({ name, type_id: type_id || null, icon: icon || null, order_index: order_index ?? null, notes: notes || null })
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single();
-    
+
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
 });
@@ -426,14 +499,14 @@ api.post('/estimated-expense-values', strictLimiter, authMiddleware, zValidator(
   const user = c.get('user');
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
-  const { item_id, period, estimated_amount, real_amount } = c.req.valid('json');
-  
+  const { item_id, period, estimated_amount, real_amount, paid } = c.req.valid('json');
+
   const { data, error } = await supabase
     .from('estimated_expense_values')
-    .insert({ user_id: user.id, item_id, period, estimated_amount, real_amount })
+    .insert({ user_id: user.id, item_id, period, estimated_amount, real_amount, paid })
     .select()
     .single();
-    
+
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
 });
@@ -443,16 +516,35 @@ api.put('/estimated-expense-values/:id', authMiddleware, zValidator('param', uui
   const token = c.get('accessToken');
   const supabase = getSupabase(token);
   const { id } = c.req.valid('param');
-  const { item_id, period, estimated_amount, real_amount } = c.req.valid('json');
-  
+  const { item_id, period, estimated_amount, real_amount, paid } = c.req.valid('json');
+
   const { data, error } = await supabase
     .from('estimated_expense_values')
-    .update({ item_id, period, estimated_amount, real_amount, updated_at: new Date().toISOString() })
+    .update({ item_id, period, estimated_amount, real_amount, paid, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single();
-    
+
+  if (error) return c.json({ error: error.message }, 500);
+  return c.json(data);
+});
+
+api.patch('/estimated-expense-values/:id/paid', authMiddleware, zValidator('param', uuidParamSchema), zValidator('json', estimatedExpenseValuePaidSchema), async (c) => {
+  const user = c.get('user');
+  const token = c.get('accessToken');
+  const supabase = getSupabase(token);
+  const { id } = c.req.valid('param');
+  const { paid } = c.req.valid('json');
+
+  const { data, error } = await supabase
+    .from('estimated_expense_values')
+    .update({ paid, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+
   if (error) return c.json({ error: error.message }, 500);
   return c.json(data);
 });

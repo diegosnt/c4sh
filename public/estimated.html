@@ -44,15 +44,15 @@
     <div class="container mx-auto px-6 flex flex-wrap items-center justify-between gap-6">
       <div class="flex flex-wrap items-center gap-3">
         <div class="stat-pill">
-          <span class="stat-label">Planificado</span>
+          <span class="stat-label">Mes actual</span>
           <span id="stat-estimated" class="stat-value">$0</span>
         </div>
         <div class="stat-pill">
-          <span class="stat-label">Ejecutado</span>
+          <span class="stat-label">Pagado</span>
           <span id="stat-real" class="stat-value color-primary">$0</span>
         </div>
         <div id="stat-diff-pill" class="stat-pill">
-          <span class="stat-label">Diferencia</span>
+          <span class="stat-label">Pendiente</span>
           <span id="stat-diff" class="stat-value">$0</span>
         </div>
       </div>
@@ -70,15 +70,8 @@
   </section>
 
   <!-- MAIN CONTAINER -->
-  <main class="container mx-auto px-6 pb-20">
+  <main class="container mx-auto px-6 pb-8">
     <div class="main-container">
-      <div class="flex items-center justify-between mb-10">
-        <div>
-          <h1 class="text-4xl font-black tracking-tighter uppercase italic">Presupuesto Anual <span class="color-primary" id="year-display">2024</span></h1>
-          
-        </div>
-        <div class="h-2 w-24 bg-color-primary rounded-full"></div>
-      </div>
 
       <div id="no-items" class="hidden py-20 text-center bg-surface-input rounded-[3rem] border-2 border-dashed border-ui">
         <p class="text-xl font-bold text-slate-400 italic">Empezá definiendo tus rubros anuales.</p>
@@ -103,49 +96,81 @@
   </main>
 
   <!-- Modals -->
-  <div id="item-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onclick="closeItemModal()"></div>
-      <div class="relative bg-surface-card rounded-[3rem] shadow-2xl w-full max-w-sm p-12 border-t-8 border-color-warning">
-        <form id="item-modal-form" class="space-y-8">
+  <div id="item-modal" class="modal-overlay">
+    <div class="modal-overlay__backdrop" onclick="closeItemModal()"></div>
+    <div class="modal-overlay__wrap">
+      <div class="modal-card" style="max-width:460px">
+        <form id="item-modal-form">
           <input type="hidden" id="modal-item-id">
-          <h3 id="item-modal-title" class="text-3xl font-black mb-8 uppercase tracking-tighter italic">Nuevo Rubro</h3>
-          <div>
-            <label class="block text-[10px] font-black uppercase color-warning mb-2 tracking-widest">Nombre</label>
-            <input class="w-full px-6 py-4 bg-surface-input border-2 border-ui rounded-2xl focus:border-color-primary outline-none text-xl font-bold" type="text" id="modal-item-name" required>
+          <h3 id="item-modal-title" class="modal-card__title">Nuevo Rubro</h3>
+
+          <div class="modal-field-row">
+            <div class="modal-field" style="flex:0 0 68px">
+              <label class="modal-card__label">Ícono</label>
+              <input class="modal-input-emoji" type="text" id="modal-item-icon" placeholder="😀" maxlength="4">
+            </div>
+            <div class="modal-field" style="flex:0 0 76px">
+              <label class="modal-card__label">Orden</label>
+              <input type="number" id="modal-item-order" min="1" step="1" placeholder="—">
+            </div>
+            <div class="modal-field" style="flex:1">
+              <label class="modal-card__label">Nombre</label>
+              <input type="text" id="modal-item-name" required>
+            </div>
           </div>
-          <div class="mt-12 flex gap-4">
-            <button type="button" onclick="closeItemModal()" class="flex-1 py-5 font-black text-zinc-400">CERRAR</button>
-            <button type="submit" class="flex-1 py-5 bg-color-primary text-white font-black rounded-2xl shadow-xl">GUARDAR</button>
+
+          <div class="modal-field">
+            <label class="modal-card__label">Tipo</label>
+            <select id="modal-item-type">
+              <option value="">— Sin tipo —</option>
+            </select>
+          </div>
+
+          <div id="new-type-row" class="modal-new-type-row" style="display:none">
+            <input type="text" id="new-type-name" placeholder="Nombre del tipo" style="flex:1">
+            <button type="button" id="new-type-save" class="modal-btn-submit" style="padding:10px 16px;font-size:0.7rem;white-space:nowrap">Agregar</button>
+          </div>
+
+          <button type="button" id="toggle-new-type" class="new-type-toggle">＋ Nuevo tipo</button>
+
+          <div class="modal-field">
+            <label class="modal-card__label">Notas</label>
+            <textarea id="modal-item-notes" class="modal-textarea" rows="2" placeholder="Observaciones..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" onclick="closeItemModal()" class="modal-btn-cancel">Cerrar</button>
+            <button type="submit" class="modal-btn-submit">Guardar</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <div id="value-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onclick="closeValueModal()"></div>
-      <div class="relative bg-surface-card rounded-[3rem] shadow-2xl w-full max-w-md p-12 border-t-8 border-color-primary">
-        <form id="value-modal-form" class="space-y-8">
+  <div id="value-modal" class="modal-overlay">
+    <div class="modal-overlay__backdrop" onclick="closeValueModal()"></div>
+    <div class="modal-overlay__wrap">
+      <div class="modal-card modal-card--primary" style="max-width:480px">
+        <form id="value-modal-form">
           <input type="hidden" id="modal-value-id">
           <input type="hidden" id="modal-value-item-id">
           <input type="hidden" id="modal-value-period">
-          <h3 class="text-3xl font-black mb-2 uppercase tracking-tighter italic">Monto</h3>
-          <p id="value-modal-subtitle" class="text-xs font-black color-primary mb-10 uppercase tracking-widest opacity-70"></p>
-          <div class="space-y-8">
-            <div class="p-6 bg-surface-input rounded-[2rem] border-2 border-color-warning-soft">
-              <label class="block text-[10px] font-black uppercase color-warning mb-2 tracking-widest">Planificado</label>
-              <input class="w-full bg-transparent border-none p-0 focus:ring-0 text-4xl font-black color-warning tabular-nums" type="number" id="modal-value-estimated" required>
+          <input type="hidden" id="modal-value-paid">
+          <h3 class="modal-card__title" style="margin-bottom:0.5rem">Monto</h3>
+          <p id="value-modal-subtitle" class="color-primary" style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;margin-bottom:2rem"></p>
+          <div style="display:flex;flex-direction:column;gap:1.5rem;margin-bottom:1rem">
+            <div class="modal-value-block">
+              <label class="modal-card__label">Planificado</label>
+              <input class="modal-value-input" type="number" id="modal-value-estimated" step="0.01" min="0" required>
             </div>
-            <div class="p-6 bg-surface-input rounded-[2rem] border-2 border-color-primary-soft">
-              <label class="block text-[10px] font-black uppercase color-primary mb-2 tracking-widest">Ejecutado</label>
-              <input class="w-full bg-transparent border-none p-0 focus:ring-0 text-4xl font-black color-primary tabular-nums" type="number" id="modal-value-real" required>
+            <div class="modal-value-block modal-value-block--primary">
+              <label class="modal-card__label" style="color:var(--primary)">Ejecutado</label>
+              <input class="modal-value-input modal-value-input--primary" type="number" id="modal-value-real" step="0.01" min="0" required>
             </div>
           </div>
-          <div class="mt-12 flex gap-4">
-            <button type="button" onclick="closeValueModal()" class="flex-1 py-5 font-black text-zinc-400">CANCELAR</button>
-            <button type="submit" class="flex-1 py-5 bg-color-primary text-white font-black rounded-2xl shadow-xl">ACTUALIZAR</button>
+          <div class="flex gap-4" style="margin-top:3rem">
+            <button type="button" onclick="closeValueModal()" class="modal-btn-cancel">Cancelar</button>
+            <button type="submit" class="modal-btn-submit">Actualizar</button>
           </div>
         </form>
       </div>

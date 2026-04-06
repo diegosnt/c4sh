@@ -40,7 +40,6 @@ body {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
   padding: 40px;
   margin-top: 32px;
-  min-height: calc(100vh - 200px);
 }
 
 /* --- Navegación -------------------------------------------- */
@@ -243,3 +242,350 @@ select:focus {
 .hover-color-warning:hover { color: var(--warning); }
 .hover-color-danger:hover  { color: var(--danger); }
 .hover-border-accent:hover { border-color: var(--accent); }
+
+/* ============================================================
+   MODALES
+   ============================================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  display: none;
+}
+.modal-overlay.active {
+  display: block;
+}
+.modal-overlay__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 0;
+}
+.modal-overlay__wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.modal-card {
+  background-color: var(--surface-card);
+  border-radius: 32px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  padding: 32px;
+  border-top: 8px solid var(--warning);
+  position: relative;
+  z-index: 10;
+}
+
+.modal-card--primary {
+  border-top-color: var(--primary);
+}
+
+.modal-card__title {
+  font-size: 1.875rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  font-style: italic;
+  color: var(--text-on-ui);
+  margin-bottom: 2rem;
+}
+
+.modal-card__label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--warning);
+  margin-bottom: 8px;
+}
+
+.modal-card--primary .modal-card__label {
+  color: var(--primary);
+}
+
+.modal-value-block {
+  padding: 20px 24px;
+  background-color: var(--surface-input);
+  border-radius: 24px;
+  border: 2px solid color-mix(in srgb, var(--warning) 20%, transparent);
+}
+
+.modal-value-block--primary {
+  border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.modal-value-input {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--warning) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-value-input--primary {
+  color: var(--primary) !important;
+}
+
+.modal-btn-cancel {
+  flex: 1;
+  padding: 18px;
+  font-weight: 900;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-on-ui);
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.modal-btn-cancel:hover { opacity: 0.7; }
+
+.modal-btn-submit {
+  flex: 1;
+  padding: 18px;
+  background-color: var(--primary);
+  color: white;
+  font-weight: 900;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+}
+.modal-btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+}
+
+.modal-field {
+  margin-bottom: 0.75rem;
+}
+
+.modal-field input,
+.modal-field select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-field-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.modal-field-row .modal-field {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.modal-field-row .modal-field input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-input-emoji {
+  text-align: center !important;
+  font-size: 1.4rem !important;
+  padding: 8px 4px !important;
+}
+
+.modal-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: var(--surface-input);
+  border: 2px solid var(--border-ui);
+  border-radius: 12px;
+  color: var(--text-on-ui);
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: none;
+  transition: border-color 0.2s;
+}
+.modal-textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.modal-new-type-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.new-type-toggle {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  opacity: 0.7;
+  transition: opacity 0.15s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.new-type-toggle:hover { opacity: 1; }
+
+/* ============================================================
+   TABLA — colores, filas y columnas alternas
+   ============================================================ */
+
+/* Header */
+.th-rubro {
+  background-color: var(--surface-header);
+  color: rgba(255,255,255,0.6);
+}
+.th-month {
+  color: var(--text-on-ui);
+  opacity: 0.5;
+}
+.th-month--even {
+  background-color: color-mix(in srgb, var(--primary) 18%, var(--surface-input));
+}
+.th-month--odd {
+  background-color: color-mix(in srgb, var(--warning) 14%, var(--surface-input));
+}
+.th-annual {
+  background-color: color-mix(in srgb, var(--warning) 16%, var(--surface-input));
+}
+
+/* Filas alternas */
+.row-even {
+  background-color: var(--surface-card);
+}
+.row-odd {
+  background-color: color-mix(in srgb, var(--primary) 8%, var(--surface-card));
+}
+.row-even .row-sticky-cell {
+  background-color: var(--surface-card);
+}
+.row-odd .row-sticky-cell {
+  background-color: color-mix(in srgb, var(--primary) 8%, var(--surface-card));
+}
+.table-row:hover td,
+.table-row:hover .row-sticky-cell {
+  background-color: color-mix(in srgb, var(--primary) 14%, var(--surface-card)) !important;
+}
+
+/* Columnas alternas */
+.col-even {
+  background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+.col-odd {
+  background-color: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
+/* Dark mode — con menos % ya se nota sobre fondos oscuros */
+[data-bs-theme="dark"] .th-month--even {
+  background-color: color-mix(in srgb, var(--primary) 10%, var(--surface-input));
+}
+[data-bs-theme="dark"] .th-month--odd {
+  background-color: color-mix(in srgb, var(--warning) 8%, var(--surface-input));
+}
+[data-bs-theme="dark"] .th-annual {
+  background-color: color-mix(in srgb, var(--warning) 10%, var(--surface-input));
+}
+[data-bs-theme="dark"] .row-odd,
+[data-bs-theme="dark"] .row-odd .row-sticky-cell {
+  background-color: color-mix(in srgb, var(--primary) 5%, var(--surface-card));
+}
+[data-bs-theme="dark"] .table-row:hover td,
+[data-bs-theme="dark"] .table-row:hover .row-sticky-cell {
+  background-color: color-mix(in srgb, var(--primary) 9%, var(--surface-card)) !important;
+}
+[data-bs-theme="dark"] .col-even {
+  background-color: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+[data-bs-theme="dark"] .col-odd {
+  background-color: color-mix(in srgb, var(--warning) 5%, transparent);
+}
+
+/* Footer */
+.tf-rubro {
+  background-color: var(--surface-header);
+  color: rgba(255,255,255,0.5);
+}
+.td-annual {
+  background-color: color-mix(in srgb, var(--warning) 8%, var(--surface-input));
+}
+
+/* ============================================================
+   TABLA — celda de valor + check
+   ============================================================ */
+
+.cell-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.check-btn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-on-ui);
+  opacity: 0;
+  border: 1.5px solid currentColor;
+  transition: all 0.15s;
+  cursor: pointer;
+  line-height: 1;
+}
+td:hover .check-btn {
+  opacity: 0.35;
+}
+td:hover .check-btn:hover {
+  opacity: 0.7;
+}
+.check-btn--paid {
+  opacity: 1 !important;
+  background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Mes actual — header */
+.th-month--current {
+  background-color: var(--warning) !important;
+  color: white !important;
+  opacity: 1 !important;
+}
+
+/* Mes actual — pago pendiente */
+.cell-pending {
+  background-color: color-mix(in srgb, var(--warning) 28%, transparent) !important;
+}
+.cell-pending .value-cell span {
+  font-weight: 900 !important;
+  color: var(--warning) !important;
+  opacity: 1 !important;
+}
