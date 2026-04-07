@@ -65,13 +65,6 @@
   <!-- MAIN CONTAINER -->
   <main class="container mx-auto px-6 pb-20">
     <div class="main-container">
-      <div class="flex items-center justify-between mb-12 border-b border-ui pb-8">
-        <div>
-          <h1 class="text-4xl font-black tracking-tighter uppercase italic">Actividad Reciente</h1>
-        </div>
-        <div class="h-2 w-24 bg-color-primary rounded-full"></div>
-      </div>
-
       <div id="transaction-list" class="grid grid-cols-1 gap-4">
         <!-- Renderizado dinámico -->
       </div>
@@ -79,50 +72,53 @@
   </main>
 
   <!-- Modal Transacción -->
-  <div id="transaction-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen p-4">
-      <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onclick="closeModal('transaction-modal')"></div>
-      <div class="relative bg-surface-card rounded-[3rem] shadow-2xl w-full max-w-lg p-12 border-t-8 border-color-warning">
-        <form id="transaction-form" class="space-y-8">
+  <div id="transaction-modal" class="modal-overlay">
+    <div class="modal-overlay__backdrop" onclick="closeModal('transaction-modal')"></div>
+    <div class="modal-overlay__wrap">
+      <div class="modal-card" style="max-width:500px">
+        <form id="transaction-form">
           <input type="hidden" id="transaction-id">
-          <h3 class="text-3xl font-black tracking-tighter uppercase italic">Transacción</h3>
-          
-          <div class="p-8 bg-surface-input rounded-[2rem] border-2 border-color-warning-soft">
-            <label class="block text-[10px] font-black uppercase color-warning mb-2 tracking-widest">Monto de Operación</label>
-            <div class="flex items-center gap-3">
-              <span class="text-4xl text-slate-300 font-light">$</span>
-              <input class="w-full bg-transparent border-none p-0 focus:ring-0 text-5xl font-black tabular-nums tracking-tighter" type="number" id="amount" step="0.01" placeholder="0.00" required>
+          <h3 id="transaction-modal-title" class="modal-card__title">Transacción</h3>
+
+          <div class="modal-value-block" style="margin-bottom:1.5rem">
+            <label class="modal-card__label">Monto de Operación</label>
+            <div style="display:flex;align-items:center;gap:0.75rem">
+              <span style="font-size:2.25rem;opacity:0.25;font-weight:300">$</span>
+              <input class="modal-value-input" type="number" id="amount" step="0.01" placeholder="0.00" required>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Categoría</label>
-                <button type="button" id="add-cat-btn" class="color-primary text-[9px] font-black uppercase">+ Nueva</button>
+          <div class="modal-field-row">
+            <div class="modal-field" style="flex:1">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <label class="modal-card__label" style="margin-bottom:0">Categoría</label>
+                <button type="button" id="add-cat-btn" class="color-primary" style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">+ Nueva</button>
               </div>
-              <select id="category" class="w-full font-bold text-sm" required></select>
+              <select id="category" required></select>
             </div>
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Medio de Pago</label>
-                <button type="button" id="add-pm-btn" class="color-primary text-[9px] font-black uppercase">+ Nuevo</button>
+            <div class="modal-field" style="flex:1">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <label class="modal-card__label" style="margin-bottom:0">Medio de Pago</label>
+                <button type="button" id="add-pm-btn" class="color-primary" style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">+ Nuevo</button>
               </div>
-              <select id="payment-method" class="w-full font-bold text-sm" required></select>
-            </div>
-            <div>
-              <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Fecha</label>
-              <input class="w-full font-bold text-sm" type="date" id="date">
-            </div>
-            <div>
-              <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Nota</label>
-              <input class="w-full font-bold text-sm" type="text" id="description" placeholder="Ej: Compra mensual">
+              <select id="payment-method" required></select>
             </div>
           </div>
 
-          <div class="mt-12 flex gap-4">
-            <button type="button" onclick="closeModal('transaction-modal')" class="flex-1 py-5 font-black text-slate-400 hover:text-slate-900 transition-colors uppercase">Cancelar</button>
-            <button type="submit" id="submit-transaction-btn" class="flex-1 py-5 bg-color-primary text-white font-black rounded-2xl shadow-xl shadow-orange-500/30 uppercase tracking-widest">Guardar</button>
+          <div class="modal-field-row">
+            <div class="modal-field" style="flex:1">
+              <label class="modal-card__label">Fecha</label>
+              <input type="date" id="date">
+            </div>
+            <div class="modal-field" style="flex:1">
+              <label class="modal-card__label">Nota</label>
+              <input type="text" id="description" placeholder="Ej: Compra mensual">
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" onclick="closeModal('transaction-modal')" class="modal-btn-cancel">Cancelar</button>
+            <button type="submit" id="submit-transaction-btn" class="modal-btn-submit">Guardar</button>
           </div>
         </form>
       </div>

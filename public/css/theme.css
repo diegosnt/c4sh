@@ -34,10 +34,10 @@
   --surface:       hsl(170, 20%, 12%);   /* mint muy oscuro — contenedor */
 
   /* Superficie y UI */
-  --surface-card:   hsl(187, 25%, 10%);   /* cards y login                */
-  --surface-input:  hsl(187, 20%, 14%);   /* inputs y selects             */
+  --surface-card:   hsl(187, 25%, 17%);   /* cards y login                */
+  --surface-input:  hsl(187, 20%, 22%);   /* inputs y selects             */
   --surface-header: hsl(187, 35%, 13%);   /* header en dark mode          */
-  --border-ui:      hsl(187, 15%, 20%);   /* bordes de tabla y contenedor */
+  --border-ui:      hsl(187, 15%, 25%);   /* bordes de tabla y contenedor */
   --border-card:    rgba(255, 255, 255, 0.05);
   --text-on-ui:     #f1f5f9;
 }
