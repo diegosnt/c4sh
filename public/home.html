@@ -30,6 +30,7 @@
         <nav class="flex items-center gap-6">
           <a href="/home.html" class="nav-link nav-link-active">Transacciones</a>
           <a href="/estimated.html" class="nav-link px-4">Presupuesto</a>
+          <a href="/settings.html" class="nav-link">Ajustes</a>
         </nav>
       </div>
       <div class="flex items-center gap-6">
@@ -65,7 +66,7 @@
   <!-- MAIN CONTAINER -->
   <main class="container mx-auto px-6 pb-20">
     <div class="main-container">
-      <div id="transaction-list" class="grid grid-cols-1 gap-4">
+      <div id="transaction-list" class="p-1" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem">
         <!-- Renderizado dinámico -->
       </div>
     </div>
@@ -90,17 +91,11 @@
 
           <div class="modal-field-row">
             <div class="modal-field" style="flex:1">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label class="modal-card__label" style="margin-bottom:0">Categoría</label>
-                <button type="button" id="add-cat-btn" class="color-primary" style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">+ Nueva</button>
-              </div>
+              <label class="modal-card__label">Categoría</label>
               <select id="category" required></select>
             </div>
             <div class="modal-field" style="flex:1">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label class="modal-card__label" style="margin-bottom:0">Medio de Pago</label>
-                <button type="button" id="add-pm-btn" class="color-primary" style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em">+ Nuevo</button>
-              </div>
+              <label class="modal-card__label">Medio de Pago</label>
               <select id="payment-method" required></select>
             </div>
           </div>

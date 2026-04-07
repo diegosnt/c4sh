@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>c4sh — Ajustes</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-bs-theme', theme);
+    })();
+  </script>
+</head>
+<body class="transition-colors duration-300">
+  
+  <!-- MASTER HEADER -->
+  <header class="app-header sticky top-0 z-50">
+    <div class="container mx-auto px-6 flex items-center justify-between">
+      <div class="flex items-center" style="gap:2rem">
+        <a href="/home.html" class="flex items-center gap-3">
+          <span class="text-2xl font-black tracking-tighter uppercase italic">c4sh</span>
+        </a>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,0.25)"></div>
+        <nav class="flex items-center gap-6">
+          <a href="/home.html" class="nav-link">Transacciones</a>
+          <a href="/estimated.html" class="nav-link px-4">Presupuesto</a>
+          <a href="/settings.html" class="nav-link nav-link-active">Ajustes</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-6">
+        <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors">🌓</button>
+        <button id="logout-btn" class="text-[10px] font-black text-white bg-color-danger px-4 py-2 rounded-lg hover:opacity-80 transition-all uppercase tracking-widest">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MASTER TOOLBELT BAR -->
+  <section class="toolbelt-bar">
+    <div class="container mx-auto px-6 flex flex-wrap items-center justify-between gap-6">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="stat-pill">
+          <span class="stat-label">Sistema</span>
+          <span class="stat-value">Configuración</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-label">Estado</span>
+          <span class="stat-value color-primary">Activo</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="add-category-btn" class="btn-brand text-[11px] uppercase tracking-widest">+ Nueva Categoría</button>
+        <button id="add-pm-btn" class="btn-brand text-[11px] uppercase tracking-widest">+ Nuevo Medio de Pago</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTAINER -->
+  <main class="container mx-auto px-6 pb-20">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
+      
+      <!-- Sección Categorías -->
+      <div class="main-container !p-0">
+        <div class="p-6 border-b border-ui flex items-center justify-between">
+          <h3 class="text-sm font-black uppercase tracking-widest italic opacity-70">Categorías</h3>
+          <span id="cat-count" class="text-[10px] font-black bg-surface-input px-2 py-1 rounded-md">0</span>
+        </div>
+        <div id="category-list" class="p-6" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+      <!-- Sección Medios de Pago -->
+      <div class="main-container !p-0">
+        <div class="p-6 border-b border-ui flex items-center justify-between">
+          <h3 class="text-sm font-black uppercase tracking-widest italic opacity-70">Medios de Pago</h3>
+          <span id="pm-count" class="text-[10px] font-black bg-surface-input px-2 py-1 rounded-md">0</span>
+        </div>
+        <div id="pm-list" class="p-6" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal Categoría -->
+  <div id="category-modal" class="modal-overlay">
+    <div class="modal-overlay__backdrop" onclick="closeModal('category-modal')"></div>
+    <div class="modal-overlay__wrap">
+      <div class="modal-card" style="max-width:460px">
+        <form id="category-form">
+          <input type="hidden" id="category-id">
+          <h3 id="category-modal-title" class="modal-card__title">Categoría</h3>
+          
+          <div class="modal-field-row">
+            <div class="modal-field" style="flex:0 0 84px">
+              <label class="modal-card__label">Ícono</label>
+              <input class="modal-input-emoji text-center" type="text" id="category-icon" placeholder="🏷️" maxlength="4">
+            </div>
+            <div class="modal-field" style="flex:1">
+              <label class="modal-card__label">Nombre</label>
+              <input type="text" id="category-name" required placeholder="Ej: Comida, Salud...">
+            </div>
+          </div>
+
+          <div class="modal-field">
+            <label class="modal-card__label">Tipo</label>
+            <select id="category-type" class="w-full">
+              <option value="expense">Gasto</option>
+              <option value="income">Ingreso</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" onclick="closeModal('category-modal')" class="modal-btn-cancel">Cancelar</button>
+            <button type="submit" id="save-category-btn" class="modal-btn-submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Medio de Pago -->
+  <div id="pm-modal" class="modal-overlay">
+    <div class="modal-overlay__backdrop" onclick="closeModal('pm-modal')"></div>
+    <div class="modal-overlay__wrap">
+      <div class="modal-card" style="max-width:460px">
+        <form id="pm-form">
+          <input type="hidden" id="pm-id">
+          <input type="hidden" id="pm-type" value="other">
+          <h3 id="pm-modal-title" class="modal-card__title">Medio de Pago</h3>
+          
+          <div class="modal-field-row">
+            <div class="modal-field" style="flex:0 0 84px">
+              <label class="modal-card__label">Ícono</label>
+              <input class="modal-input-emoji text-center" type="text" id="pm-icon" placeholder="💳" maxlength="4">
+            </div>
+            <div class="modal-field" style="flex:1">
+              <label class="modal-card__label">Nombre</label>
+              <input type="text" id="pm-name" required placeholder="Ej: Efectivo, BBVA...">
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" onclick="closeModal('pm-modal')" class="modal-btn-cancel">Cancelar</button>
+            <button type="submit" id="save-pm-btn" class="modal-btn-submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/settings.js"></script>
+  <script>
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  </script>
+</body>
+</html>
