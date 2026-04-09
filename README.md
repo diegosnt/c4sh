@@ -20,41 +20,29 @@ Aplicación minimalista para el seguimiento de transacciones y planificación de
 
 ### Login (`/index.html`)
 - Autenticación con Supabase Auth (email + password)
-- Credenciales de Supabase inyectadas server-side en el HTML — nunca expuestas como endpoint público
-- Manejo de errores con feedback visual
+- Manejo de sesión persistente con redirección automática
+- Diseño limpio y responsivo
 
 ### Transacciones (`/home.html`)
 - Registro de ingresos y gastos con categoría, medio de pago, fecha y descripción
 - Dashboard en tiempo real: saldo neto, total ingresos, total gastos
 - CRUD completo de transacciones
-- Gestión de categorías (con ícono, color y tipo ingreso/gasto) desde modal inline
-- Gestión de medios de pago (efectivo, débito, crédito, otro) desde modal inline
+- Gestión rápida de categorías y medios de pago desde modales inline
 
 ### Presupuesto Anual (`/estimated.html`)
 - Tabla matricial: rubros × 12 meses del año seleccionado
 - Selector de año para navegar históricos
+- **Celdas dinámicas**: cada celda muestra el monto planificado (naranja) o ejecutado (teal) del período
+- **Edición de montos**: actualización instantánea con hasta 2 decimales
+- **Check de pago**: control visual de obligaciones cumplidas por mes; resaltado visual de pagos pendientes en el mes actual
+- **Barra de herramientas**: cálculo automático de Total Mes (consolidado), Pagado y Pendiente
 
-#### Rubros
-- Creación y edición de rubros con: nombre, ícono/emoji, número de orden manual, tipo y notas
-- Tipos de rubro en tabla propia (`item_types`): creación inline desde el modal de rubro
-- Ordenamiento manual por `order_index`, con fallback a fecha de creación
-
-#### Celdas de la tabla
-- Cada celda muestra el monto planificado (naranja) o ejecutado (teal) del período
-- Edición de montos (planificado / ejecutado) con hasta 2 decimales
-- Check de pago por celda: indica si el pago del mes fue realizado
-- Las celdas del mes actual con pago pendiente se resaltan visualmente
-- El check aparece al hacer hover sobre la celda; queda visible siempre cuando está pagado
-
-#### Barra de herramientas
-- **Mes actual**: total de rubros del mes en curso (ejecutado si existe, planificado si no)
-- **Pagado**: suma de rubros marcados como pagados en el mes actual
-- **Pendiente**: diferencia entre el total del mes y lo pagado
-
-#### Tabla
-- Colores alternados por fila y columna para mejor legibilidad
-- Cabecera del mes actual resaltada en naranja
-- Totales por rubro (columna ANUAL) y totales por mes (fila Cierre Consolidado)
+### Ajustes (`/settings.html`)
+- Gestión centralizada de diccionarios de la aplicación
+- **Categorías**: CRUD completo de categorías con ícono/emoji, nombre y tipo (ingreso/gasto)
+- **Medios de Pago**: CRUD completo de métodos (Efectivo, Débito, Crédito, etc.)
+- **Clonación**: función para duplicar categorías o medios de pago existentes y agilizar la carga de datos
+- Contador de elementos configurados por sección
 
 ---
 
@@ -119,11 +107,11 @@ El dark mode está implementado vía `[data-bs-theme="dark"]` con las mismas var
 ## Seguridad
 
 - **Row Level Security (RLS)**: aislamiento total a nivel de base de datos por `user_id`
+- **JWT Middleware**: validación de sesión de Supabase en cada request a la API (inyecta `user` y `accessToken` en el contexto)
 - **Secure Headers** (Hono): CSP, HSTS, X-Frame-Options, X-Content-Type-Options
 - **Validación con Zod**: tipos, longitudes máximas y sanitización en todos los endpoints
 - **Rate Limiting**: 100 req/min por IP general, 20 req/min en endpoints de escritura
-- **XSS**: escape de HTML en todo contenido dinámico generado por el cliente
-- **Config de Supabase**: inyectada server-side en el HTML — nunca expuesta como endpoint público
+- **XSS Protection**: escape de HTML en todo contenido dinámico generado por el cliente
 
 ---
 
@@ -158,7 +146,7 @@ pnpm dev:css
 c4sh/
 ├── api/
 │   ├── lib/                    — Cliente Supabase autenticado
-│   ├── middleware/              — Validación JWT
+│   ├── middleware/              — Validación JWT (auth.ts)
 │   └── server.ts               — Servidor Hono: endpoints, schemas Zod, static serving
 ├── public/
 │   ├── css/
@@ -171,10 +159,12 @@ c4sh/
 │   │   ├── app.js              — Lógica del login
 │   │   ├── finance.js          — Lógica de Transacciones
 │   │   ├── estimated.js        — Lógica de Presupuesto Anual
+│   │   ├── settings.js         — Lógica de Configuración (Categorías/Pagos)
 │   │   └── supabase-client.js  — Cliente Supabase frontend
 │   ├── index.html              — Login
 │   ├── home.html               — Transacciones
-│   └── estimated.html          — Presupuesto Anual
+│   ├── estimated.html          /* Presupuesto Anual */
+│   └── settings.html           /* Ajustes */
 ├── tailwind.config.js
 ├── vercel.json
 └── package.json
@@ -184,16 +174,18 @@ c4sh/
 
 ## Tareas pendientes
 
-### Performance
+### Backend & Performance
 - [ ] Paginación en `/api/transactions` — soporte para `?limit=` y `?offset=`
 - [ ] Índices en columnas `user_id` en todas las tablas
-- [ ] Cachear el cliente Supabase autenticado por token
-- [ ] Recargar solo los datos que cambian post-operación
+- [ ] Implementar borrado lógico o físico (DELETE) para categorías y medios de pago
+- [ ] Recargar solo los datos que cambian post-operación (Partial hydration)
 
-### UX
-- [ ] Estados de loading y error en la UI
-- [ ] Endpoints DELETE para categorías y medios de pago
-- [ ] Estadísticas por tipo de rubro
+### UX/UI
+- [ ] Estados de loading (skeletons) y manejo de errores global en la UI
+- [ ] Estadísticas visuales (gráficos) por tipo de rubro y categoría
+- [ ] Filtros avanzados en la lista de transacciones
 
 ### Deuda técnica
-- [ ] Reemplazar `supabase-minimal.js` por el SDK oficial en todos los módulos frontend
+- [ ] Migrar lógica de `supabase-minimal.js` al SDK oficial (`supabase-client.js`)
+- [ ] Implementar tests unitarios para los middlewares de Hono
+- [ ] Tipado compartido entre backend y frontend (tRPC o similar)
